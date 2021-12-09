@@ -51,9 +51,10 @@ def pd_word_masking(
   text        = row["update_text"]
   match_start = row["match_start"] 
   match_end   = row["match_end"]
+  relevant    = row["relevant"]
 
-  if match_start == -2 and match_end == -2:
-    return
+  if not relevant:
+    return text, [0] * len(text.split()), match_start, match_end
 
   if len(text) - 1 == match_end and match_start == 0:
     return text.replace(SEP, ""), [1] * len(text.split()), match_start-len(SEP), match_end-len(SEP)
@@ -91,10 +92,17 @@ def pd_word_multi_masking(
 ) -> (str, list, int, int):
 
   text        = row["update_text"]
-  match_start = row["match_start"] 
+  match_start = row["match_start"]
   match_end   = row["match_end"]
+  relevant    = row["relevant"]
+
+  if not relevant:
+    return text, [0] * len(text.split()), match_start, match_end
 
   if len(text) - 1 == match_end and match_start == 0:
-    return text.replace(SEP, ""), [1] * len(text.split()), match_start-len(SEP), match_end-len(SEP)
+    mask = [1]
+    mask.extend([2] * (len(text.split()) - 2))
+    mask.extend([3])
+    return text.replace(SEP, ""), mask, match_start-len(SEP), match_end-len(SEP)
 
   return word_multi_masking(text, match_start, match_end)

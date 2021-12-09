@@ -92,7 +92,8 @@ def find_closest_valid_character(
 def align_span_indices(
         text:       str,
         span_start: int,
-        span_end:   int
+        span_end:   int,
+        relevant:   bool
 ) -> (str, int, int, bool):
     """
       Receives in input a string and two integer indices (span_start, span_end).
@@ -100,6 +101,9 @@ def align_span_indices(
       and to the end of the word selected by span_end.
       Returns two integers (span_start_aligned and span_end_aligned).
     """
+    if not relevant:
+        return text, span_start, span_end, False
+
     if not validate_index(text, span_start) or not validate_index(text, span_end):
         return text, -1, -1, True
 
@@ -128,5 +132,6 @@ def pd_align_span_indices(
     text       = row["update_text"]
     span_start = row["match_start"]
     span_end   = row["match_end"]
+    relevant   = row["relevant"]
 
-    return align_span_indices(text, span_start, span_end)
+    return align_span_indices(text, span_start, span_end, relevant)

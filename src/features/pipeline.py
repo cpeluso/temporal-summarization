@@ -14,14 +14,17 @@ def lower_text_data(df: pd.DataFrame) -> pd.DataFrame:
 
 def preprocess_text(df: pd.DataFrame) -> pd.DataFrame:
     print("> Preprocessing the data...")
-    df[['update_text', 'match_start', 'match_end']] = df.apply(pd_apply_regex, axis=1, result_type="expand")
+    df[["update_text", "match_start", "match_end", "relevant"]] = df.apply(pd_apply_regex, axis=1, result_type="expand")
     return df
 
 
 def align_spans(df: pd.DataFrame) -> pd.DataFrame:
     print("> Aligning spans...")
     df[["update_text", "match_start", "match_end", "changed"]] = df.apply(pd_align_span_indices, axis=1, result_type="expand")
-    df = df[df["match_start"] != -1]
+    # Cut from the dataframe the rows that have match_start == -1 and relevant == True
+    # i.e.,
+    # Keep into the dataframe the rows that have match_start != -1 or relevant == False
+    df = df[(df["match_start"] != -1) | (df["relevant"] == False)]
     return df
 
 
