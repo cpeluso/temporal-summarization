@@ -7,6 +7,8 @@ from sklearn.metrics import accuracy_score
 from src.model.evaluator import *
 from utils.tokenizers import tokenizers
 
+from transformers import AutoTokenizer
+
 class BertTrainer:
 
     def __init__(self,
@@ -30,7 +32,9 @@ class BertTrainer:
         test_batch_size,
 
         continuous_evaluation: bool = False,
-        model_save_path:       str  = None
+        model_save_path:       str  = None,
+
+        zero_label_matters: bool = False 
     ):
 
       self.model           = model
@@ -58,6 +62,8 @@ class BertTrainer:
       self.best_validation_accuracy = 0
 
       self.evaluator = Evaluator(self.tokenizer, max_num_words, self.model.num_labels)
+
+      self.zero_label_matters = zero_label_matters
       
       pass
 
@@ -81,7 +87,11 @@ class BertTrainer:
       flattened_predictions = torch.argmax(active_logits, axis=1) # shape (batch_size * seq_len,)
       
       # only compute accuracy at active labels
-      active_accuracy = labels.view(-1) != 0 # shape (batch_size, seq_len)
+ 
+      if self.zero_label_matters:
+        active_accuracy = labels.view(-1) != -100 # shape (batch_size, seq_len)
+      else:
+        active_accuracy = labels.view(-1) != 0 # shape (batch_size, seq_len)
       #active_labels = torch.where(active_accuracy, labels.view(-1), torch.tensor(-100).type_as(labels))
       
       labels      = torch.masked_select(flattened_targets, active_accuracy)

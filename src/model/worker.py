@@ -20,31 +20,31 @@ model_params = {
     "bert-uncased": {
         "backbone": "BertForTokenClassification",
         "model_name": "bert-large-uncased",
-        "encoder": "bert",
+        "tokenizer": "bert",
         "tokenizer_type": "uncased"
     },
     "bert-cased": {
         "backbone": "BertForTokenClassification",
         "model_name": "bert-large-cased",
-        "encoder": "bert",
+        "tokenizer": "bert",
         "tokenizer_type": "cased"
     },
     "spanbert-cased": {
         "backbone": "SpanBertForTokenClassification",
         "model_name": "SpanBERT/spanbert-large-cased",
-        "encoder": "spanbert",
+        "tokenizer": "spanbert",
         "tokenizer_type": "cased"
     },
     "roberta-uncased": {
         "backbone": "RobertaForTokenClassification",
         "model_name": "roberta-large",
-        "encoder": "roberta",
+        "tokenizer": "roberta",
         "tokenizer_type": "uncased"
     },
     "roberta-cased": {
         "backbone": "RobertaForTokenClassification",
         "model_name": "roberta-large",
-        "encoder": "roberta",
+        "tokenizer": "roberta",
         "tokenizer_type": "cased"
     }
 }
@@ -110,6 +110,14 @@ def __get_dataset(args):
 
   return datasets[key]
 
+def __is_full_dataset(args):
+  try:
+    key = args["full_dataset"]
+  except:
+    key = str(input("Should I load the full dataset (with not-relevant texts)? (y/n) "))
+
+  return __str_to_bool(key) 
+
 def __is_binary(args):
   try:
     key = args['binary']
@@ -125,14 +133,6 @@ def __is_contextual(args):
     key = str(input("Should I add context to the data? (y/n) "))
   
   return __str_to_bool(key)
-
-def __is_timestamped(args):
-  try:
-    key = args["timestamp"]
-  except:
-    key = str(input("Should I add timestamps to the data? (y/n) "))
-
-  return __str_to_bool(key)  
 
 def __is_splitted_on_topics(args):
   try:
@@ -150,9 +150,9 @@ def __is_continuous_evaluation(args):
 
   return __str_to_bool(key) 
 
-def __get_saving_path(CONTINUOUS_EVALUATION, model, N_CLASSES, CONTEXTUAL, TIMESTAMPED):
+def __get_saving_path(CONTINUOUS_EVALUATION, model, N_CLASSES, CONTEXTUAL, ONLY_RELEVANT):
   if CONTINUOUS_EVALUATION:
-    base_path = f"models/{model}/{N_CLASSES}_classes/context_{CONTEXTUAL}/timestamp_{TIMESTAMPED}/"
+    base_path = f"models/{model}/{N_CLASSES}_classes/context_{CONTEXTUAL}/only-relevant_{ONLY_RELEVANT}/"
     path      = base_path + "model.pth"
     try:
       os.makedirs(base_path, mode = 0o666)
@@ -170,7 +170,7 @@ def __get_default_params():
 
   default_params = dict(
     IS_BACKBONE_TRAINED = True,
-    LEARNING_RATE       = 1e-5,
+    LEARNING_RATE       = 2e-5,
     EPOCHS              = 3,
     MAX_GRAD_NORM       = 10,
     N_LOGGING_STEPS     = 100,
@@ -209,15 +209,15 @@ def __get_dataloaders_params(default_params):
 
   return train_params, valid_params, test_params
 
-def __get_wandb_name(model, BINARY_TOKEN_CLASSIFICATION, CONTEXTUAL, TIMESTAMPED):
+def __get_wandb_name(model, BINARY_TOKEN_CLASSIFICATION, CONTEXTUAL, ONLY_RELEVANT):
 
   name = model
 
-  binary      = "binary"      if BINARY_TOKEN_CLASSIFICATION else "not-binary"
-  contextual  = "contextual"  if CONTEXTUAL                  else "not-contextual"
-  timestamped = "timestamped" if TIMESTAMPED                 else "not-timestamped"
+  binary        = "binary"        if BINARY_TOKEN_CLASSIFICATION else "not-binary"
+  contextual    = "contextual"    if CONTEXTUAL                  else "not-contextual"
+  only_relevant = "only-relevant" if ONLY_RELEVANT               else "full"
 
-  name = name + "_" + binary + "_" + contextual + "_" + timestamped
+  name = name + "_" + binary + "_" + contextual + "_" + only_relevant
 
   return name
 
@@ -231,7 +231,7 @@ def setup(*args):
 
     BACKBONE       = model_params[model]["backbone"]
     MODEL_NAME     = model_params[model]["model_name"]
-    ENCODER        = model_params[model]["encoder"]
+    TOKENIZER_NAME = model_params[model]["tokenizer"]
     TOKENIZER_TYPE = model_params[model]["tokenizer_type"]
 
     print()
@@ -244,6 +244,14 @@ def setup(*args):
     print("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *")
     print()
     print(f"Very good! Your model will be trained on {DATASETS} data.")
+    print()
+
+    ONLY_RELEVANT = not __is_full_dataset(args)
+
+    print()
+    print("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *")
+    print()
+    print("Ok, seems legit!")
     print()
 
     BINARY_TOKEN_CLASSIFICATION = __is_binary(args)
@@ -263,14 +271,6 @@ def setup(*args):
     print("Fair enough.")
     print()
 
-    TIMESTAMPED = __is_timestamped(args)
-
-    print()
-    print("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *")
-    print()
-    print("We're almost done! Just few more questions...")
-    print()
-
     SPLIT_DATASETS_ON_TOPICS = __is_splitted_on_topics(args)
 
     print()
@@ -280,7 +280,7 @@ def setup(*args):
     print()
 
     CONTINUOUS_EVALUATION = __is_continuous_evaluation(args)
-    MODEL_SAVE_PATH       = __get_saving_path(CONTINUOUS_EVALUATION, model, N_CLASSES, CONTEXTUAL, TIMESTAMPED)
+    MODEL_SAVE_PATH       = __get_saving_path(CONTINUOUS_EVALUATION, model, N_CLASSES, CONTEXTUAL, ONLY_RELEVANT)
     
     print()
     print("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *")
@@ -294,19 +294,45 @@ def setup(*args):
 
     train_params, valid_params, test_params = __get_dataloaders_params(default_params)
 
-    datamanager = DataManager()
-    data = datamanager.get_dataset(DATASETS, ENCODER, TOKENIZER_TYPE, BINARY_TOKEN_CLASSIFICATION, CONTEXTUAL, TIMESTAMPED)
-    train_data, valid_data, test_data = datamanager.split_datasets(data, default_params['TRAIN_SIZE'], default_params['TEST_SIZE'], SPLIT_DATASETS_ON_TOPICS)
-    training_set, validation_set, testing_set = datamanager.load_torch_datasets(train_data, valid_data, test_data)
-    training_loader, validation_loader, testing_loader = datamanager.load_torch_dataloaders(training_set, validation_set, testing_set, train_params, valid_params, test_params)
+    datamanager = DataManager(DATASETS, 
+                              ONLY_RELEVANT, 
+                              TOKENIZER_NAME, 
+                              TOKENIZER_TYPE, 
+                              BINARY_TOKEN_CLASSIFICATION, 
+                              CONTEXTUAL, 
+                              default_params['TRAIN_SIZE'], 
+                              default_params['TEST_SIZE'], 
+                              SPLIT_DATASETS_ON_TOPICS)
+    
+    data = datamanager.get_dataset()
+    
+    train_data, valid_data, test_data = datamanager.split_datasets(data)
+    
+    torch_datasets = datamanager.load_torch_datasets(train_data, 
+                                                     valid_data, 
+                                                     test_data)
+    
+    training_set, validation_set, testing_set = torch_datasets 
+    
+    torch_dataloaders = datamanager.load_torch_dataloaders(training_set, 
+                                                           validation_set, 
+                                                           testing_set, 
+                                                           train_params, 
+                                                           valid_params, 
+                                                           test_params)
+    
+    training_loader, validation_loader, testing_loader = torch_dataloaders
 
-    name  = __get_wandb_name(model, BINARY_TOKEN_CLASSIFICATION, CONTEXTUAL, TIMESTAMPED)
+    name  = __get_wandb_name(model, 
+                             BINARY_TOKEN_CLASSIFICATION, 
+                             CONTEXTUAL, 
+                             ONLY_RELEVANT)
     group = model
     
     config = dict(
       n_classes           = N_CLASSES,
       datasets            = DATASETS,
-      encoder             = ENCODER,
+      tokenizer_name      = TOKENIZER_NAME,
       max_len             = default_params['MAX_LEN'],
       train_size          = default_params['TRAIN_SIZE'],
       train_batch_size    = default_params['TRAIN_BATCH_SIZE'],
@@ -341,7 +367,7 @@ def setup(*args):
         default_params['EPOCHS'], 
         default_params['N_LOGGING_STEPS'],
         default_params['MAX_GRAD_NORM'],
-        ENCODER, 
+        TOKENIZER_NAME, 
         TOKENIZER_TYPE,
         default_params['MAX_LEN'],
         training_loader,
@@ -351,7 +377,8 @@ def setup(*args):
         default_params['VALID_BATCH_SIZE'],
         default_params['TEST_BATCH_SIZE'],
         CONTINUOUS_EVALUATION,
-        MODEL_SAVE_PATH
+        MODEL_SAVE_PATH,
+        zero_label_matters = False if ONLY_RELEVANT else True
     )
 
     return trainer
