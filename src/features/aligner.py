@@ -113,7 +113,7 @@ def __align_span_indices(
 ) -> (str, int, int, bool):
     """
       Receives in input a string and two integer indices (span_start, span_end).
-      Align the indices to the beginning of the word selected by span_start
+      Aligns the indices to the beginning of the word selected by span_start
       and to the end of the word selected by span_end.
       Returns two integers (span_start_aligned and span_end_aligned).
     """

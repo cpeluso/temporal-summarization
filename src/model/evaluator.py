@@ -20,7 +20,7 @@ class Evaluator:
 
     Methods
     -------
-    evaluate_batch(batch, predictions)
+    evaluate_batch(batch, predictions):
         Prints the text associated to the ground truth and
         prints the text associated to the predictions.
     """

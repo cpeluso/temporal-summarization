@@ -6,8 +6,8 @@
 # import import_ipynb
 # % cd "gdrive/MyDrive/temporal-summarization"
 
-from src.features.preparator import *
-from src.features.pipeline   import *
+from src.features.lifter   import *
+from src.features.pipeline import *
 
 from utils.tokenizers import tokenizers, separators
 

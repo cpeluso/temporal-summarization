@@ -1,3 +1,8 @@
+"""
+This file has the purpose of connecting the DataLoader class to 
+every file needed for the preprocessing phase.
+"""
+
 import pandas as pd
 
 from src.features.aligner      import *
@@ -7,23 +12,23 @@ from src.features.preprocessor import *
 
 
 def delete_not_string_texts(df: pd.DataFrame) -> pd.DataFrame:
-  df['update_text_is_string'] = df['update_text'].apply(lambda s: isinstance(s, str))
-  df['query_is_string']       = df['query'].apply(lambda s: isinstance(s, str))
+    df['update_text_is_string'] = df['update_text'].apply(lambda s: isinstance(s, str))
+    df['query_is_string']       = df['query'].apply(lambda s: isinstance(s, str))
 
-  num_texts_not_string   = len(df[df['update_text_is_string'] == False ])
-  num_queries_not_string = len(df[df['query_is_string'] == False ])
+    num_texts_not_string   = len(df[df['update_text_is_string'] == False ])
+    num_queries_not_string = len(df[df['query_is_string'] == False ])
 
-  if num_texts_not_string > 0:
-    print(f"Removing {num_texts_not_string} row(s). Text isn't recongized as a string.")
-    df = df[df['update_text_is_string'] == True]
+    if num_texts_not_string > 0:
+        print(f"Removing {num_texts_not_string} row(s). Text isn't recongized as a string.")
+        df = df[df['update_text_is_string'] == True]
 
-  if num_queries_not_string > 0:
-    print(f"Removing {num_queries_not_string} row(s). Context isn't recongized as a string.")
-    df = df[df['query_is_string'] == True]
+    if num_queries_not_string > 0:
+        print(f"Removing {num_queries_not_string} row(s). Context isn't recongized as a string.")
+        df = df[df['query_is_string'] == True]
 
-  df.drop(columns=['update_text_is_string', 'query_is_string'])
+    df.drop(columns=['update_text_is_string', 'query_is_string'])
 
-  return df
+    return df
 
 
 def lower_text_data(df: pd.DataFrame) -> pd.DataFrame:

@@ -1,12 +1,26 @@
-from transformers import AutoTokenizer
+"""
+This file has the purpose of applying regular expressions to each text contained in the dataset.
+
+Such regular expressions are applied in order to maintain the one-to-one mapping between
+original text and encode-decoded text (by means of a BERT-like Tokenizer).
+
+The exposed function pd_apply_regex, 
+receives in input a pd.Series containing a string (the update_text column),
+two integer indices (span_start, span_end) and a boolean (relevant).
+
+It applies every regex defined to each text and keeps the span_start and span_end aligned.
+
+It returns a string and two integers (aligned_span_start and aligned_span_end).
+"""
+
 import re
 import pandas as pd
 
 
-def realign_indices(shift, match_start, match_end, regex_start, regex_end):
+def __realign_indices(shift, match_start, match_end, regex_start, regex_end):
     """
-  Realign indices after applying a regex.
-  """
+    Realign indices after applying a regex.
+    """
 
     if match_start <= regex_start:
         new_match_start = match_start
@@ -23,7 +37,13 @@ def realign_indices(shift, match_start, match_end, regex_start, regex_end):
     return new_match_start, new_match_end
 
 
-def process_text(text: str, match_start: int, match_end: int, relevant: bool):
+def apply_regex(text: str, match_start: int, match_end: int, relevant: bool):
+    """
+    Receives in input a pd.Series containing a string (the update_text column),
+    two integer indices (span_start, span_end) and a boolean (relevant).
+    Applies every regex defined to each text and keeps the span_start and span_end aligned.
+    Returns a string and two integers (aligned_span_start and aligned_span_end).
+    """
     all_regex = [
         (r'[0-9],[0-9]', lambda match: match.group()[0] + match.group()[-1]),
         (r'[`“]', "_ "),
@@ -323,10 +343,13 @@ def process_text(text: str, match_start: int, match_end: int, relevant: bool):
 
             # Update indices
             if relevant:
-                match_start, match_end = realign_indices(shift, match_start, match_end, regex_start, regex_end)
+                match_start, match_end = __realign_indices(shift, match_start, match_end, regex_start, regex_end)
 
     return text, match_start, match_end, relevant
 
 
 def pd_apply_regex(row: pd.Series):
-    return process_text(row["update_text"], row["match_start"], row["match_end"], row["relevant"])
+    """
+    Pandas wrapper of the apply_regex function.
+    """
+    return apply_regex(row["update_text"], row["match_start"], row["match_end"], row["relevant"])
