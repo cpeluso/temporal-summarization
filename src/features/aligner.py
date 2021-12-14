@@ -1,31 +1,47 @@
+"""
+This file has the purpose of processing each text contained in the given dataset,
+aligning each match_start and match_end to a reasonable character inside the text.
+
+This process should modify a relatively small portion of the data.
+
+The exposed function, pd_align_span_indices, receives in input a pd.Series,
+containing a string (the update_text column) and two integer indices (span_start, span_end).
+
+It aligns the indices to the beginning of the word selected by span_start
+and to the end of the word selected by span_end.
+
+It returns two integers (span_start_aligned and span_end_aligned).
+"""
+
+
 import re
 import pandas as pd
 import string
 
 SEP = "<_>"
 
-def validate_index(
+def __validate_index(
         text:  str,
         index: int
 ) -> bool:
     return 0 <= index <= len(text)
 
 
-def previous_character_is_valid(
+def __previous_character_is_valid(
         text:  str,
         index: int
 ) -> bool:
     return text[index - 1] == " " or text[index - 1] in string.punctuation and text[index].islower()
 
 
-def following_character_is_valid(
+def __following_character_is_valid(
         text:  str,
         index: int
 ) -> bool:
     return len(text) - 1 == index or text[index] == " " or text[index] in string.punctuation
 
 
-def align_span_start_index(
+def __align_span_start_index(
         text:  str,
         index: int
 ) -> int:
@@ -33,29 +49,29 @@ def align_span_start_index(
     if text[index] == " " and text[index + 1].islower():
       return index + 1
 
-    if previous_character_is_valid(text, index):
+    if __previous_character_is_valid(text, index):
         return index
 
-    index = find_closest_valid_character(text, index, "P")
+    index = __find_closest_valid_character(text, index, "P")
 
     return index
 
 
-def align_span_end_index(
+def __align_span_end_index(
         text:  str,
         index: int
 ) -> int:
     max_len = len(text)
 
-    if index == max_len or following_character_is_valid(text, index):
+    if index == max_len or __following_character_is_valid(text, index):
         return index
 
-    index = find_closest_valid_character(text, index, "F")
+    index = __find_closest_valid_character(text, index, "F")
 
     return index
 
 
-def find_closest_valid_character(
+def __find_closest_valid_character(
         text:    str,
         index:   int,
         default: str
@@ -65,10 +81,10 @@ def find_closest_valid_character(
 
     max_len = len(text)
 
-    while not previous_character_is_valid(text, pvs_index) and pvs_index > 0:
+    while not __previous_character_is_valid(text, pvs_index) and pvs_index > 0:
         pvs_index -= 1
 
-    while not following_character_is_valid(text, fwd_index) and fwd_index < max_len:
+    while not __following_character_is_valid(text, fwd_index) and fwd_index < max_len:
         fwd_index += 1
 
     fwd_error = abs(index - fwd_index)
@@ -89,7 +105,7 @@ def find_closest_valid_character(
     raise Exception()
 
 
-def align_span_indices(
+def __align_span_indices(
         text:       str,
         span_start: int,
         span_end:   int,
@@ -104,11 +120,11 @@ def align_span_indices(
     if not relevant:
         return text, span_start, span_end, False
 
-    if not validate_index(text, span_start) or not validate_index(text, span_end):
+    if not __validate_index(text, span_start) or not __validate_index(text, span_end):
         return text, -1, -1, True
 
-    aligned_span_start = align_span_start_index(text, span_start)
-    aligned_span_end   = align_span_end_index(text, span_end)
+    aligned_span_start = __align_span_start_index(text, span_start)
+    aligned_span_end   = __align_span_end_index(text, span_end)
 
     if re.search('[a-zA-Z]', text[aligned_span_start:aligned_span_end]) is None:
         return text, -1, -1, True
@@ -134,4 +150,4 @@ def pd_align_span_indices(
     span_end   = row["match_end"]
     relevant   = row["relevant"]
 
-    return align_span_indices(text, span_start, span_end, relevant)
+    return __align_span_indices(text, span_start, span_end, relevant)

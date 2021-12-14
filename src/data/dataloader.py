@@ -1,20 +1,14 @@
 # from google.colab import drive, output
-#
 # drive.mount('/content/gdrive', force_remount=True)
-#
 # !pip install import-ipynb -q
-#
 # !pip install transformers -q
-#
 # output.clear()
-#
 # import import_ipynb
-#
 # % cd "gdrive/MyDrive/temporal-summarization"
 
 from src.features.preparator import *
-from src.features.expander import *
-from src.features.pipeline import *
+from src.features.expander   import *
+from src.features.pipeline   import *
 
 from utils.tokenizers import tokenizers, separators
 
@@ -25,41 +19,41 @@ import csv
 
 pd.options.mode.chained_assignment = None
 
-T13_topics_filename = './data/raw/T13/trec2013-ts-topics-test.xml'
+T13_topics_filename  = './data/raw/T13/trec2013-ts-topics-test.xml'
 T13_matches_filename = './data/raw/T13/matches.tsv'
 T13_nuggets_filename = './data/raw/T13/nuggets.tsv'
 T13_updates_filename = './data/raw/T13/updates.tsv'
 
-T14_topics_filename = './data/raw/T14/trec2014-ts-topics-test.xml'
+T14_topics_filename  = './data/raw/T14/trec2014-ts-topics-test.xml'
 T14_matches_filename = './data/raw/T14/matches.tsv'
 T14_nuggets_filename = './data/raw/T14/nuggets.tsv'
 T14_updates_filename = './data/raw/T14/updates_sampled.tsv'
 
-T15_topics_filename = './data/raw/T15/trec2015-ts-topics-test.xml'
+T15_topics_filename  = './data/raw/T15/trec2015-ts-topics-test.xml'
 T15_matches_filename = './data/raw/T15/matches.tsv'
 T15_nuggets_filename = './data/raw/T15/nuggets.tsv'
 T15_updates_filename = './data/raw/T15/updates_sampled.tsv'
 
-TOPICS = "topics"
+TOPICS  = "topics"
 MATCHES = "matches"
 UPDATES = "updates"
 NUGGETS = "nuggets"
 
 filenames = {
     "2013": {
-        TOPICS: T13_topics_filename,
+        TOPICS:  T13_topics_filename,
         MATCHES: T13_matches_filename,
         NUGGETS: T13_nuggets_filename,
         UPDATES: T13_updates_filename
     },
     "2014": {
-        TOPICS: T14_topics_filename,
+        TOPICS:  T14_topics_filename,
         MATCHES: T14_matches_filename,
         NUGGETS: T14_nuggets_filename,
         UPDATES: T14_updates_filename
     },
     "2015": {
-        TOPICS: T15_topics_filename,
+        TOPICS:  T15_topics_filename,
         MATCHES: T15_matches_filename,
         NUGGETS: T15_nuggets_filename,
         UPDATES: T15_updates_filename
@@ -109,59 +103,38 @@ class DataLoader:
 
     def __init__(
             self,
-            datasets: list,
-            only_relevant: bool = False,
-            tokenizer_name: str = "bert",
-            tokenizer_type: str = "uncased",
-            max_num_words: int = 512,
-            binary_masks: bool = True,
-            contextual: bool = False
+            datasets:       list,
+            only_relevant:  bool = False,
+            tokenizer_name: str  = "bert",
+            tokenizer_type: str  = "uncased",
+            max_num_words:  int  = 512,
+            binary_masks:   bool = True,
+            contextual:     bool = False
     ):
-        self.datasets = datasets
-        self.only_relevant = only_relevant
+        self.datasets       = datasets
+        self.only_relevant  = only_relevant
         self.tokenizer_name = tokenizer_name
         self.tokenizer_type = tokenizer_type
-        self.max_num_words = max_num_words
-        self.binary_masks = binary_masks
-        self.contextual = contextual
+        self.max_num_words  = max_num_words
+        self.binary_masks   = binary_masks
+        self.contextual     = contextual
 
         self.lower_text_data = True if self.tokenizer_type == "uncased" else False
 
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizers[tokenizer_name][tokenizer_type], truncation=True,
-                                                       do_lower_case=self.lower_text_data)
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizers[tokenizer_name][tokenizer_type], truncation=True, do_lower_case=self.lower_text_data)
         pass
+
 
     def load_data(self) -> pd.DataFrame:
         """
         Loads, prepares, encodes and adjusts the data.
         """
-
         df = self.__load_datasets()
-        print("- - - - - - - - - -")
-        print()
-        print(df.columns)
-        print(len(df))
-        print()
-        print("- - - - - - - - - -")
-        df = self.__prepare_data(df)
-        print()
-        print(df.columns)
-        print(len(df))
-        print()
-        print("- - - - - - - - - -")
+        df = self.__preprocess_data(df)
         df = self.__encode_data(df)
-        print()
-        print(df.columns)
-        print(len(df))
-        print()
-        print("- - - - - - - - - -")
-        df = self.__adjust_data(df)
-        print()
-        print(df.columns)
-        print(len(df))
-        print()
-        print("- - - - - - - - - -")
+        df = self.__postprocess_data(df)
         return df
+
 
     def __load_datasets(self) -> pd.DataFrame:
         """
@@ -178,6 +151,7 @@ class DataLoader:
                 merged_df = pd.concat([merged_df, df])
 
         return merged_df
+
 
     def __load(
             self,
@@ -204,20 +178,20 @@ class DataLoader:
 
         return df
 
+
     @staticmethod
     def __read_data(dataset: str):
         """
         Reads the raw data from .csv files.
-        The path(s) in which the data can be found is defined inside the
-        filenames dictionary.
+        The path(s) in which the data can be found is defined inside the filenames dictionary.
         """
 
-        topics_filename = filenames[dataset][TOPICS]
+        topics_filename  = filenames[dataset][TOPICS]
         matches_filename = filenames[dataset][MATCHES]
         nuggets_filename = filenames[dataset][NUGGETS]
         updates_filename = filenames[dataset][UPDATES]
 
-        topics = read_xml(topics_filename)
+        topics  = read_xml(topics_filename)
         matches = pd.read_table(matches_filename, quoting=csv.QUOTE_NONE)
         nuggets = pd.read_table(nuggets_filename, quoting=csv.QUOTE_NONE)
         updates = pd.read_table(updates_filename, quoting=csv.QUOTE_NONE)
@@ -226,30 +200,52 @@ class DataLoader:
 
         return topics, matches, nuggets, updates
 
+
     def __load_relevant_updates(
             self,
             matches_df: pd.DataFrame,
             updates_df: pd.DataFrame,
             nuggets_df: pd.DataFrame
     ) -> pd.DataFrame:
+        """
+        Joins the matches DataFrame with the updates DataFrame.
+        In this way, only the relevant updates are retrieved.
+        The resulting DataFrame is then joined with the nuggets DataFrame.
+        If no columns from the nuggets DataFrame are selected, this join is useless.
+        Some columns that may be useful are "timestamp" and "nugget_text".
+
+        --------
+
+        Returns a pandas DataFrame consisting of
+        ['update_text', 'match_start', 'match_end', 'query', 'relevant'] columns.
+        """
 
         df = matches_df \
             .merge(updates_df, left_on='update_id', right_on='update_id') \
-            .merge(nuggets_df, left_on='nugget_id', right_on='nugget_id')[
-            ["update_text", "match_start", "match_end", "query"]]
+            .merge(nuggets_df, left_on='nugget_id', right_on='nugget_id')[["update_text", "match_start", "match_end", "query"]]
 
         df['relevant'] = True
 
         return df
+
 
     def __load_not_relevant_updates(
             self,
             matches_df: pd.DataFrame,
             updates_df: pd.DataFrame
     ) -> pd.DataFrame:
+        """
+        Returns a pandas DataFrame containing only the updates not relevant.
+        An update is not relevant if its update_id is not inside the matches DataFrame.
 
-        update_ids = set(updates_df.update_id.unique())
-        relevant_updates = set(matches_df.update_id.unique())
+        --------
+
+        Returns a pandas DataFrame consisting of
+        ['update_text', 'match_start', 'match_end', 'query', 'relevant'] columns.
+        """
+
+        update_ids           = set(updates_df.update_id.unique())
+        relevant_updates     = set(matches_df.update_id.unique())
         not_relevant_updates = update_ids.difference(relevant_updates)
 
         df = updates_df[updates_df.update_id.isin(not_relevant_updates)]
@@ -260,10 +256,25 @@ class DataLoader:
 
         return df
 
-    def __prepare_data(
+
+    def __preprocess_data(
             self,
             df: pd.DataFrame
     ) -> pd.DataFrame:
+        """
+        Processes the data, in several steps:
+            * Every row in which "update_text" or "query" are not strings, are deleted.
+            * If using an "uncased" tokenizer, the text is converted to lowercase.
+            * Several REs are applied to the data, in order to fit the tokenizer.
+            * The spans (i.e., the interval of the text considered relevant) are aligned, avoiding
+            referencing internal characters of a word by match_start or match_end.
+            * The masks (the ground truth) are produced.
+            * The data is collapsed: in fact, the same update_text can have several relevant portions.
+            During this phase, the update_text is maintained unique, and the masks are merged together through
+            a boolean OR.
+        """
+
+        df = delete_not_string_texts(df)
 
         if self.lower_text_data:
             df = lower_text_data(df)
@@ -277,18 +288,46 @@ class DataLoader:
 
         return df
 
-    def concat_not_relevant_data(self, df: pd.DataFrame):
-        for dataset in self.datasets:
-            topics, matches, nuggets, updates = self.__read_data(dataset)
-            not_relevant_df = self.__load_not_relevant_updates(matches, updates)
-            df = pd.concat([df, not_relevant_df])
+
+    def __postprocess_data(
+            self,
+            df: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+        Post-processes the data in two (one optional) steps:
+            * Deletes the first character of a sentence, if the first character is a space.
+            * If during the initialization phase of the DataLoader, the attribute "binary" was set to False,
+            the masks will be fixed in this way:
+            if in the mask there is a situation like [0,1,2,2,2,2,2,3,2,2,2,2,3,0],
+            the first 3 is replaced with a 2.
+            This because 3 represents the end of a span: however, here, 2 masks are overlapping.
+            So, it is necessary to fix them.
+        """
+
+        df[['text', 'mask']] = df.apply(fix_first_character_if_space, axis=1, result_type="expand")
+
+        if not self.binary_masks:
+            df['mask'] = df['mask'].apply(fix_consecutive_masks)
 
         return df
+
 
     def __encode_data(
             self,
             df: pd.DataFrame
     ) -> pd.DataFrame:
+        """
+        Encodes the data by means of some parameters defined during the initialization of the DataLoader class.
+
+        In particular, the encoding phase is driven by the parameters
+            * "tokenizer_name" identifies the name of the Tokenizer that will be used for the encoding
+            * "tokenizer_type" identifies the typology of the Tokenizer that will be used for the encoding
+            * if "contextual" is True, the context of the update_text is also encoded.
+            (e.g., context = "costa concordia", update_text = "500 deaths in costa concordia disaster",
+            text encoded = "500 deaths in costa concordia disaster" + Separator + "costa concordia")
+            * "max_num_words" identifies the maximum number of words that the tokenizer will take into consideration
+            during the encoding phase.
+        """
 
         print(f"> Contextual: {self.contextual}")
         print(f"> Lower case: {self.lower_text_data}")
@@ -312,17 +351,5 @@ class DataLoader:
         df[["input_ids", "attention_mask"]] = df.apply(lambda row: encode_plus(row), axis=1, result_type='expand')
 
         df = drop_rows_exceeding_max_len(df, self.max_num_words)
-
-        return df
-
-    def __adjust_data(
-            self,
-            df: pd.DataFrame
-    ) -> pd.DataFrame:
-
-        df[['text', 'mask']] = df.apply(fix_first_character_if_space, axis=1, result_type="expand")
-
-        if not self.binary_masks:
-            df['mask'] = df['mask'].apply(fix_consecutive_masks)
 
         return df
