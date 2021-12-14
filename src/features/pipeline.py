@@ -5,6 +5,27 @@ from src.features.masker       import *
 from src.features.collapser    import *
 from src.features.preprocessor import *
 
+
+def delete_not_string_texts(df: pd.DataFrame) -> pd.DataFrame:
+  df['update_text_is_string'] = df['update_text'].apply(lambda s: isinstance(s, str))
+  df['query_is_string']       = df['query'].apply(lambda s: isinstance(s, str))
+
+  num_texts_not_string   = len(df[df['update_text_is_string'] == False ])
+  num_queries_not_string = len(df[df['query_is_string'] == False ])
+
+  if num_texts_not_string > 0:
+    print(f"Removing {num_texts_not_string} row(s). Text isn't recongized as a string.")
+    df = df[df['update_text_is_string'] == True]
+
+  if num_queries_not_string > 0:
+    print(f"Removing {num_queries_not_string} row(s). Context isn't recongized as a string.")
+    df = df[df['query_is_string'] == True]
+
+  df.drop(columns=['update_text_is_string', 'query_is_string'])
+
+  return df
+
+
 def lower_text_data(df: pd.DataFrame) -> pd.DataFrame:
     print("> Making text lowercase...")
     df['update_text'] = df['update_text'].apply(str.lower)
@@ -43,22 +64,6 @@ def mask_spans(df: pd.DataFrame, padding: int, binary=True) -> pd.DataFrame:
     return df
 
 
-def fix_consecutive_masks(mask: list) -> pd.DataFrame:
-    cleaned_mask = []
-
-    last_element = -1
-
-    for element in mask:
-
-        if element == 2 and last_element == 3:
-            cleaned_mask[-1] = 2
-
-        cleaned_mask.append(element)
-        last_element = element
-
-    return cleaned_mask
-
-
 def collapse_data(df: pd.DataFrame) -> pd.DataFrame:
     print("> Collapsing the data...")
     dict_df = df.to_dict('records')
@@ -80,3 +85,32 @@ def drop_rows_exceeding_max_len(
     df.drop(columns=['n_words'], inplace=True)
 
     return df
+
+
+def fix_consecutive_masks(mask: list) -> list:
+    cleaned_mask = []
+
+    last_element = -1
+
+    for element in mask:
+
+        if element == 2 and last_element == 3:
+            cleaned_mask[-1] = 2
+
+        cleaned_mask.append(element)
+        last_element = element
+
+    return cleaned_mask
+
+
+def fix_first_character_if_space(row: pd.Series):
+    text = row["text"]
+    mask = row["mask"]
+
+    if text[0] == " ":
+        text = text[1:]
+
+    if text[-1] == " ":
+        text = text[:-1]
+
+    return text, mask

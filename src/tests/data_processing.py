@@ -1,4 +1,4 @@
-from src.features.expander import fix_first_character_if_space
+from src.features.pipeline import fix_first_character_if_space
 
 def __encode(tokenizer, text, max_len):
 

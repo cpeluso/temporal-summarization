@@ -1,5 +1,8 @@
 import pandas as pd
 
+from utils.decorators import deprecated
+
+@deprecated
 class ExpandedRecord:
   
   def __init__(self, text: list, mask: list):
@@ -107,15 +110,3 @@ def expand_records(data: list, padding: int):
     expanded_records.append(records)
 
   return expanded_records
-
-def fix_first_character_if_space(row: pd.Series):
-  text = row["text"]
-  mask = row["mask"]
-
-  if text[0] == " ":
-    text = text[1:]
-  
-  if text[-1] == " ":
-    text = text[:-1]
-
-  return text, mask

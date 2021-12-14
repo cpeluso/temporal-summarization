@@ -7,7 +7,6 @@
 # % cd "gdrive/MyDrive/temporal-summarization"
 
 from src.features.preparator import *
-from src.features.expander   import *
 from src.features.pipeline   import *
 
 from utils.tokenizers import tokenizers, separators
