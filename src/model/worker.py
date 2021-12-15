@@ -150,6 +150,14 @@ def __is_continuous_evaluation(args):
 
   return __str_to_bool(key) 
 
+def __get_learning_rate(args):
+  try:
+    learning_rate = args["learning_rate"]
+  except:
+    learning_rate = 3e-5
+
+  return learning_rate
+
 def __get_saving_path(CONTINUOUS_EVALUATION, model, N_CLASSES, CONTEXTUAL, ONLY_RELEVANT):
   if CONTINUOUS_EVALUATION:
     base_path = f"models/{model}/{N_CLASSES}_classes/context_{CONTEXTUAL}/only-relevant_{ONLY_RELEVANT}/"
@@ -170,7 +178,6 @@ def __get_default_params():
 
   default_params = dict(
     IS_BACKBONE_TRAINED = True,
-    LEARNING_RATE       = 2e-5,
     EPOCHS              = 3,
     MAX_GRAD_NORM       = 10,
     N_LOGGING_STEPS     = 100,
@@ -288,6 +295,8 @@ def setup(*args):
     print("Cool! We're done!")
     print()
 
+    learning_rate = __get_learning_rate(args)
+
     output.clear()
 
     default_params = __get_default_params()
@@ -337,7 +346,7 @@ def setup(*args):
       train_size          = default_params['TRAIN_SIZE'],
       train_batch_size    = default_params['TRAIN_BATCH_SIZE'],
       valid_batch_size    = default_params['VALID_BATCH_SIZE'],
-      learning_rate       = default_params['LEARNING_RATE'],
+      learning_rate       = learning_rate,
       train_shuffle       = default_params['TRAIN_SHUFFLE'],
       valid_shuffle       = default_params['VALID_SHUFFLE'],
       num_workers         = default_params['NUM_WORKERS'],
@@ -358,7 +367,7 @@ def setup(*args):
         model = RobertaForTokenClassification.from_pretrained(MODEL_NAME, num_labels=N_CLASSES)
 
     model.to(device)
-    optimizer = torch.optim.AdamW(params=model.parameters(), lr=default_params['LEARNING_RATE'])
+    optimizer = torch.optim.AdamW(params=model.parameters(), lr=learning_rate)
 
     trainer = BertTrainer(
         model,
