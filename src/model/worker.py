@@ -7,6 +7,8 @@ from src.data.datamanager import *
 from src.model.trainer    import *
 from utils.cuda_utils     import clean_torch_memory
 
+from src.model.training_params import default_params
+
 import torch
 import random
 import os
@@ -154,7 +156,7 @@ def __get_learning_rate(args):
   try:
     learning_rate = args["learning_rate"]
   except:
-    learning_rate = 3e-5
+    learning_rate = default_params["LEARNING_RATE"]
 
   return learning_rate
 
@@ -173,27 +175,6 @@ def __get_saving_path(CONTINUOUS_EVALUATION, model, N_CLASSES, CONTEXTUAL, ONLY_
     path = None
   
   return path
-
-def __get_default_params():
-
-  default_params = dict(
-    IS_BACKBONE_TRAINED = True,
-    EPOCHS              = 3,
-    MAX_GRAD_NORM       = 10,
-    N_LOGGING_STEPS     = 100,
-    MAX_LEN             = 512,
-    TRAIN_SIZE          = 0.8,
-    TEST_SIZE           = 0.5, # of TRAIN_SIZE
-    TRAIN_BATCH_SIZE    = 2,
-    VALID_BATCH_SIZE    = 1,
-    TEST_BATCH_SIZE     = 1,
-    TRAIN_SHUFFLE       = True,
-    VALID_SHUFFLE       = False,
-    TEST_SHUFFLE        = False,
-    NUM_WORKERS         = 0
-  )
-
-  return default_params
 
 def __get_dataloaders_params(default_params):
   train_params = {
@@ -298,8 +279,6 @@ def setup(*args):
     learning_rate = __get_learning_rate(args)
 
     output.clear()
-
-    default_params = __get_default_params()
 
     train_params, valid_params, test_params = __get_dataloaders_params(default_params)
 
