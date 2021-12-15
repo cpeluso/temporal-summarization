@@ -40,8 +40,6 @@ def get_dataset_path(
     only_relevant_str = "only_relevant" if only_relevant else "full"
     path = path + only_relevant_str
 
-    print(path)
-
     return path + ".csv"
 
 
