@@ -27,9 +27,9 @@ def get_dataset_path(
 
     # RoBERTa tokenization does not differ in terms of cased / uncased
     if tokenizer == "roberta":
-        path = f"data/processed/{data}_{tokenizer}"
+        path = f"{data}_{tokenizer}"
     else:
-        path = f"data/processed/{data}_{tokenizer}-{tokenizer_type}"
+        path = f"{data}_{tokenizer}-{tokenizer_type}"
 
     binary_str = "_binary_" if binary else "_not-binary_"
     path = path + binary_str
@@ -39,6 +39,8 @@ def get_dataset_path(
 
     only_relevant_str = "only_relevant" if only_relevant else "full"
     path = path + only_relevant_str
+
+    print(path)
 
     return path + ".csv"
 
