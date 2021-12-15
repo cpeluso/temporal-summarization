@@ -25,7 +25,11 @@ def get_dataset_path(
 
     data = data[:-1]
 
-    path = f"data/processed/{data}_{tokenizer}-{tokenizer_type}"
+    # RoBERTa tokenization does not differ in terms of cased / uncased
+    if tokenizer == "roberta":
+        path = f"data/processed/{data}_{tokenizer}"
+    else:
+        path = f"data/processed/{data}_{tokenizer}-{tokenizer_type}"
 
     binary_str = "_binary_" if binary else "_not-binary_"
     path = path + binary_str

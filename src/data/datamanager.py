@@ -14,8 +14,8 @@ from torch.utils.data import Dataset, DataLoader as TorchDataLoader
 import pandas as pd
 import math
 
-from src.data.connector import get_dataset_path
-
+from src.data.s3_connector import download_data
+from src.data.connector    import get_dataset_path
 
 class TrecDataset(torch.utils.data.Dataset):
   """
@@ -97,11 +97,11 @@ class DataManager:
   Methods
   -------
   get_dataset():
-      Returns the dataset requested through the parameters passed during the initialization of the DataManager class.
+      Returns the dataset requested through the parameters given during the initialization of the DataManager class.
 
   split_dataset(data: pd.DataFrame):
       Returns three DataFrames (train, validation and test),
-      depending on the parameters passed during the initialization of the DataManager class.
+      depending on the parameters given during the initialization of the DataManager class.
 
   load_torch_datasets(
     train_data: pd.DataFrame,
@@ -146,8 +146,10 @@ class DataManager:
 
   def get_dataset(self) -> pd.DataFrame:
     """
-    Returns the dataset requested through the parameters passed during the initialization of the DataManager class.
+    Returns the dataset requested 
+    through the parameters given during the initialization of the DataManager class.
     """
+    download_data(self.dataset_path)
     return pd.read_csv(self.dataset_path)
 
 
@@ -157,7 +159,7 @@ class DataManager:
   ) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     """
     Returns three DataFrames (train, validation and test),
-    depending on the parameters passed during the initialization of the DataManager class.
+    depending on the parameters given during the initialization of the DataManager class.
     """
 
     if self.split_on_topics:
@@ -178,7 +180,7 @@ class DataManager:
   ) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     """
     Splits the DataFrame by query,
-    depending on the parameters passed during the initialization of the DataManager class.
+    depending on the parameters given during the initialization of the DataManager class.
     """
 
     topics   = list(data["query"].unique())
@@ -209,7 +211,7 @@ class DataManager:
   ) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     """
     Splits the DataFrame by percentage,
-    depending on the parameters passed during the initialization of the DataManager class.
+    depending on the parameters given during the initialization of the DataManager class.
     """
 
     train_data = data.sample(frac=self.train_size, random_state=200)
