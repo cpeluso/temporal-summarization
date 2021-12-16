@@ -11,7 +11,27 @@ temporal-summarization bucket on Amazon S3.
 import json
 import boto3
 
-def download_data(dataset_path: str):
+def download_file(filename: str):
+    """
+    Receives a string in input (the file path)
+    and downloads the requested file from Amazon S3.
+
+    If no errors are raised, the downloading phase
+    ended correctly.
+    """
+
+    with open('./config/rootkey.json') as f:
+        config = json.load(f)
+        aws_access_key_id     = config['AWSAccessKeyId']
+        aws_secret_access_key = config['AWSSecretKey']
+        bucket                = config['Bucket']
+
+    print("> Downloading file from Amazon S3...")
+    s3 = boto3.client('s3', aws_access_key_id = aws_access_key_id , aws_secret_access_key = aws_secret_access_key)
+    s3.download_file(bucket, filename, filename)
+    print("> File downloaded!")
+
+def upload_file(filename):
     """
     Receives a string in input (the dataset path)
     and downloads the requested data from Amazon S3.
@@ -26,7 +46,7 @@ def download_data(dataset_path: str):
         aws_secret_access_key = config['AWSSecretKey']
         bucket                = config['Bucket']
 
-    print("> Downloading dataset from Amazon S3...")
+    print("> Uploading file to Amazon S3...")
     s3 = boto3.client('s3', aws_access_key_id = aws_access_key_id , aws_secret_access_key = aws_secret_access_key)
-    s3.download_file(bucket, dataset_path, dataset_path)
-    print("> Dataset downloaded!")
+    response = s3.upload_file(filename, bucket, filename)
+    print("> File uploaded!")

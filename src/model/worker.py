@@ -160,19 +160,16 @@ def __get_learning_rate(args):
 
   return learning_rate
 
-def __get_saving_path(CONTINUOUS_EVALUATION, model, N_CLASSES, CONTEXTUAL, ONLY_RELEVANT):
-  if CONTINUOUS_EVALUATION:
-    base_path = f"models/{model}/{N_CLASSES}_classes/context_{CONTEXTUAL}/only-relevant_{ONLY_RELEVANT}/"
-    path      = base_path + "model.pth"
-    try:
-      os.makedirs(base_path, mode = 0o666)
-    except OSError as e:
-      if e.errno == errno.EEXIST:
-          print('Directory not created because it already exists.')
-      else:
-          raise
-  else:
-    path = None
+def __get_saving_path(model, N_CLASSES, CONTEXTUAL, ONLY_RELEVANT):
+  base_path = f"models/{model}/{N_CLASSES}_classes/context_{CONTEXTUAL}/only-relevant_{ONLY_RELEVANT}/"
+  path      = base_path + "model.pth"
+  try:
+    os.makedirs(base_path, mode = 0o666)
+  except OSError as e:
+    if e.errno == errno.EEXIST:
+        print('Directory not created because it already exists.')
+    else:
+        raise
   
   return path
 
@@ -268,7 +265,7 @@ def setup(*args):
     print()
 
     CONTINUOUS_EVALUATION = __is_continuous_evaluation(args)
-    MODEL_SAVE_PATH       = __get_saving_path(CONTINUOUS_EVALUATION, model, N_CLASSES, CONTEXTUAL, ONLY_RELEVANT)
+    MODEL_SAVE_PATH       = __get_saving_path(model, N_CLASSES, CONTEXTUAL, ONLY_RELEVANT)
     
     print()
     print("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *")
@@ -277,6 +274,11 @@ def setup(*args):
     print()
 
     learning_rate = __get_learning_rate(args)
+
+    try:
+      load_pretrained_model = args['load_pretrained_model']
+    except:
+      load_pretrained_model = False
 
     output.clear()
 
@@ -311,29 +313,31 @@ def setup(*args):
     
     training_loader, validation_loader, testing_loader = torch_dataloaders
 
-    name  = __get_wandb_name(model, 
-                             BINARY_TOKEN_CLASSIFICATION, 
-                             CONTEXTUAL, 
-                             ONLY_RELEVANT)
-    group = model
-    
-    config = dict(
-      n_classes           = N_CLASSES,
-      datasets            = DATASETS,
-      tokenizer_name      = TOKENIZER_NAME,
-      tokenizer_type      = TOKENIZER_TYPE,
-      contextual          = CONTEXTUAL,
-      only_relevant       = ONLY_RELEVANT,
-      train_size          = default_params['TRAIN_SIZE'],
-      train_batch_size    = default_params['TRAIN_BATCH_SIZE'],
-      valid_batch_size    = default_params['VALID_BATCH_SIZE'],
-      learning_rate       = learning_rate,
-      train_shuffle       = default_params['TRAIN_SHUFFLE'],
-      valid_shuffle       = default_params['VALID_SHUFFLE'],
-      epochs              = default_params['EPOCHS']
-    )
+    if not load_pretrained_model:
 
-    wandb.init(group=group, project="temporal-summarization", entity="cpeluso", name=name, config=config)
+        name  = __get_wandb_name(model, 
+                                BINARY_TOKEN_CLASSIFICATION, 
+                                CONTEXTUAL, 
+                                ONLY_RELEVANT)
+        group = model
+        
+        config = dict(
+          n_classes        = N_CLASSES,
+          datasets         = DATASETS,
+          tokenizer_name   = TOKENIZER_NAME,
+          tokenizer_type   = TOKENIZER_TYPE,
+          contextual       = CONTEXTUAL,
+          only_relevant    = ONLY_RELEVANT,
+          train_size       = default_params['TRAIN_SIZE'],
+          train_batch_size = default_params['TRAIN_BATCH_SIZE'],
+          valid_batch_size = default_params['VALID_BATCH_SIZE'],
+          learning_rate    = learning_rate,
+          train_shuffle    = default_params['TRAIN_SHUFFLE'],
+          valid_shuffle    = default_params['VALID_SHUFFLE'],
+          epochs           = default_params['EPOCHS']
+        )
+
+        wandb.init(group=group, project="temporal-summarization", entity="cpeluso", name=name, config=config)
 
     if device == "cuda":
         clean_torch_memory()
@@ -348,6 +352,7 @@ def setup(*args):
     optimizer = torch.optim.AdamW(params=model.parameters(), lr=learning_rate)
 
     trainer = BertTrainer(
+        load_pretrained_model,
         model,
         device, 
         optimizer,
@@ -364,8 +369,7 @@ def setup(*args):
         default_params['VALID_BATCH_SIZE'],
         default_params['TEST_BATCH_SIZE'],
         CONTINUOUS_EVALUATION,
-        MODEL_SAVE_PATH,
-        zero_label_matters = False if ONLY_RELEVANT else True
+        MODEL_SAVE_PATH
     )
 
     return trainer

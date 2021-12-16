@@ -6,12 +6,16 @@ from sklearn.metrics import accuracy_score
 
 from src.model.evaluator import *
 from utils.tokenizers import tokenizers
+from data.s3_connector import download_file, upload_file
+from model.producer import Producer
 
 from transformers import AutoTokenizer
 
 class BertTrainer:
 
-    def __init__(self,
+    def __init__(
+        self,
+        load_pretrained_model,
         model,
         device, 
         optimizer,
@@ -32,12 +36,15 @@ class BertTrainer:
         test_batch_size,
 
         continuous_evaluation: bool = False,
-        model_save_path:       str  = None,
-
-        zero_label_matters: bool = False 
+        model_save_path:       str  = None
     ):
 
-      self.model           = model
+      self.model = model
+
+      if load_pretrained_model:
+        download_file(model_save_path)
+        self.model.load_state_dict(torch.load(model_save_path))     
+
       self.device          = device
       self.optimizer       = optimizer
       self.epochs          = epochs
@@ -45,6 +52,7 @@ class BertTrainer:
       self.max_grad_norm   = max_grad_norm
 
       do_lower_case = True if tokenizer_type == "uncased" else False
+
       self.tokenizer     = AutoTokenizer.from_pretrained(tokenizers[tokenizer][tokenizer_type], truncation = True, do_lower_case = do_lower_case)
       self.max_num_words = max_num_words
       
@@ -62,9 +70,6 @@ class BertTrainer:
       self.best_validation_accuracy = 0
 
       self.evaluator = Evaluator(self.tokenizer, max_num_words, self.model.num_labels)
-
-      self.zero_label_matters = zero_label_matters
-      
       pass
 
     def __unpack_batch(self, batch):
@@ -87,11 +92,7 @@ class BertTrainer:
       flattened_predictions = torch.argmax(active_logits, axis=1) # shape (batch_size * seq_len,)
       
       # only compute accuracy at active labels
- 
-      if self.zero_label_matters:
-        active_accuracy = labels.view(-1) != -100 # shape (batch_size, seq_len)
-      else:
-        active_accuracy = labels.view(-1) != 0 # shape (batch_size, seq_len)
+      active_accuracy = labels.view(-1) != 0 # shape (batch_size, seq_len)
       #active_labels = torch.where(active_accuracy, labels.view(-1), torch.tensor(-100).type_as(labels))
       
       labels      = torch.masked_select(flattened_targets, active_accuracy)
@@ -222,11 +223,12 @@ class BertTrainer:
                 wandb.log({"valid_loss_epoch": epoch_loss})
                 wandb.log({"valid_acc_epoch": tr_accuracy})
 
-            if self.continuous_evaluation and epoch_loss < self.best_validation_loss:
-                self.best_validation_loss = epoch_loss
+            if self.continuous_evaluation and tr_accuracy > self.best_validation_accuracy:
+                self.best_validation_accuracy = tr_accuracy
                 print("Saving the model: just achieved the best performance on validation set!")
                 print(f"path: {self.model_save_path}")
                 torch.save(self.model.state_dict(), self.model_save_path)
+                upload_file(self.model_save_path)
                 print(f"Validation accuracy: {tr_accuracy}")
                 print(f"Validation loss:     {epoch_loss}")
 
@@ -271,3 +273,43 @@ class BertTrainer:
             if "wandb" in sys.modules:
                 wandb.log({"valid_loss_epoch": epoch_loss})
                 wandb.log({"valid_acc_epoch": tr_accuracy})
+    
+
+    def produce_summary(self, dataloader = None):
+
+        if dataloader is None:
+            dataloader = self.testing_loader
+
+        producer = Producer()
+
+        with torch.no_grad():
+
+            tr_loss        = 0
+            tr_accuracy    = 0
+            nb_tr_examples = 0 
+            nb_tr_steps    = 0
+
+            self.model.eval()
+            
+            for _, batch in enumerate(dataloader):
+                
+                input_ids, attention_mask, labels = self.__unpack_batch(batch)
+
+                loss, tr_logits = self.__forward(input_ids, attention_mask, labels)
+
+                tr_loss += loss.item()
+
+                nb_tr_steps += 1
+                nb_tr_examples += labels.size(0)
+
+                tr_accuracy, flattened_predictions = self.__compute_accuracy(labels, tr_logits, tr_accuracy)
+            
+                real_spans, predicted_spans = self.evaluator.evaluate_batch(batch, flattened_predictions)
+                producer.update_summary(real_spans, predicted_spans)
+
+            epoch_loss  = tr_loss / nb_tr_steps
+            tr_accuracy = tr_accuracy / nb_tr_steps
+            print(f"Loss: {epoch_loss}")
+            print(f"Accuracy: {tr_accuracy}")
+
+        producer.show_summary()
