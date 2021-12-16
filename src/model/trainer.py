@@ -6,8 +6,8 @@ from sklearn.metrics import accuracy_score
 
 from src.model.evaluator import *
 from utils.tokenizers import tokenizers
-from data.s3_connector import download_file, upload_file
-from model.producer import Producer
+from src.data.s3_connector import download_file, upload_file
+from src.model.producer import Producer
 
 from transformers import AutoTokenizer
 

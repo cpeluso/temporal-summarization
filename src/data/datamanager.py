@@ -14,7 +14,7 @@ from torch.utils.data import Dataset, DataLoader as TorchDataLoader
 import pandas as pd
 import math
 
-from src.data.s3_connector import download_data
+from src.data.s3_connector import download_file
 from src.data.connector    import get_dataset_path
 
 class TrecDataset(torch.utils.data.Dataset):
@@ -149,7 +149,7 @@ class DataManager:
     Returns the dataset requested 
     through the parameters given during the initialization of the DataManager class.
     """
-    download_data(self.dataset_path)
+    download_file(self.dataset_path)
     return pd.read_csv(self.dataset_path)
 
 
