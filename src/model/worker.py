@@ -184,15 +184,15 @@ def __get_dataloaders_params(default_params):
   }
 
   valid_params = {
-      'batch_size':  default_params['VALID_BATCH_SIZE'],
-      'shuffle':     default_params['VALID_SHUFFLE'],
-      'num_workers': default_params['NUM_WORKERS']
+    'batch_size':  default_params['VALID_BATCH_SIZE'],
+    'shuffle':     default_params['VALID_SHUFFLE'],
+    'num_workers': default_params['NUM_WORKERS']
   }
 
   test_params = {
-      'batch_size':  default_params['TEST_BATCH_SIZE'],
-      'shuffle':     default_params['TEST_SHUFFLE'],
-      'num_workers': default_params['NUM_WORKERS']
+    'batch_size':  default_params['TEST_BATCH_SIZE'],
+    'shuffle':     default_params['TEST_SHUFFLE'],
+    'num_workers': default_params['NUM_WORKERS']
   }
 
   return train_params, valid_params, test_params

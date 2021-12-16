@@ -103,7 +103,7 @@ class DataLoader:
     def __init__(
             self,
             datasets:       list,
-            only_relevant:  bool = False,
+            only_relevant:  bool = True,
             tokenizer_name: str  = "bert",
             tokenizer_type: str  = "uncased",
             max_num_words:  int  = 512,
