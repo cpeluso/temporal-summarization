@@ -321,17 +321,16 @@ def setup(*args):
       n_classes           = N_CLASSES,
       datasets            = DATASETS,
       tokenizer_name      = TOKENIZER_NAME,
-      max_len             = default_params['MAX_LEN'],
+      tokenizer_type      = TOKENIZER_TYPE,
+      contextual          = CONTEXTUAL,
+      only_relevant       = ONLY_RELEVANT,
       train_size          = default_params['TRAIN_SIZE'],
       train_batch_size    = default_params['TRAIN_BATCH_SIZE'],
       valid_batch_size    = default_params['VALID_BATCH_SIZE'],
       learning_rate       = learning_rate,
       train_shuffle       = default_params['TRAIN_SHUFFLE'],
       valid_shuffle       = default_params['VALID_SHUFFLE'],
-      num_workers         = default_params['NUM_WORKERS'],
-      epochs              = default_params['EPOCHS'],
-      backbone            = BACKBONE,
-      is_backbone_trained = default_params['IS_BACKBONE_TRAINED']
+      epochs              = default_params['EPOCHS']
     )
 
     wandb.init(group=group, project="temporal-summarization", entity="cpeluso", name=name, config=config)
