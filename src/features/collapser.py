@@ -39,19 +39,22 @@ class CollapsedRecord:
             match_start: int,
             match_end:   int,
             query:       str,
+            timestamp:   int,
             mask:        list = None
     ):
-        self.text  = text
-        self.spans = [Span(match_start, match_end)]
-        self.query = query
-        self.mask  = mask
+        self.text      = text
+        self.spans     = [Span(match_start, match_end)]
+        self.query     = query
+        self.timestamp = timestamp
+        self.mask      = mask
         pass
 
     def to_dict(self):
         return {
-            'text':  self.text,
-            'mask':  self.mask,
-            'query': self.query
+            'text':      self.text,
+            'mask':      self.mask,
+            'query':     self.query,
+            'timestamp': self.timestamp
         }
 
     def update_span(self, match_start: int, match_end: int):
@@ -101,6 +104,7 @@ def __collapse_mask_records(data: list) -> list:
         match_end   = record["match_end"]
         mask        = record["mask"]
         query       = record["query"]
+        timestamp   = record["timestamp"]
 
         collapsed_record = list(filter(lambda record: record.text == update_text, collapsed_data))
         collapsed_record = collapsed_record[0] if collapsed_record != [] else None
@@ -109,7 +113,7 @@ def __collapse_mask_records(data: list) -> list:
             collapsed_record.update_span(match_start, match_end)
             collapsed_record.update_mask(mask)
         else:
-            collapsed_data.append(CollapsedRecord(update_text, match_start, match_end, query, mask))
+            collapsed_data.append(CollapsedRecord(update_text, match_start, match_end, query, timestamp, mask))
 
     assert len(distinct_updates) == len(collapsed_data)
 

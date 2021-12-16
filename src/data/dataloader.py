@@ -221,7 +221,7 @@ class DataLoader:
 
         df = matches_df \
             .merge(updates_df, left_on='update_id', right_on='update_id') \
-            .merge(nuggets_df, left_on='nugget_id', right_on='nugget_id')[["update_text", "match_start", "match_end", "query"]]
+            .merge(nuggets_df, left_on='nugget_id', right_on='nugget_id')[["update_text", "match_start", "match_end", "query", "timestamp"]]
 
         df['relevant'] = True
 

@@ -200,7 +200,7 @@ class DataManager:
 
     test_data  = valid_data[valid_data["query"].isin(test_topics)]
     valid_data = valid_data.drop(test_data.index).reset_index(drop=True)
-    test_data  = test_data.reset_index(drop=True)
+    test_data  = test_data.reset_index(drop=True).sort_values(by="timestamp")
 
     return train_data, valid_data, test_data
 

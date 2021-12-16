@@ -1,10 +1,8 @@
 # from google.colab import drive, output
 # drive.mount('/content/gdrive', force_remount=True)
 # % cd "gdrive/MyDrive/temporal-summarization"
-#
 # !pip install import-ipynb -q
 # !pip install transformers -q
-#
 # import import_ipynb
 # output.clear()
 
@@ -78,7 +76,7 @@ def generate():
 
   binary             = [True, False]
   context            = [True, False]
-  only_relevant_data = [True, False]
+  only_relevant_data = [True]
 
   n_datasets = len(tokenizers_params) * len(binary) * len(context) * len(only_relevant_data)
   idx = 1
