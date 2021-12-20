@@ -88,8 +88,10 @@ class Producer:
                     #
                     # Then, summary_sentences and summary_sentences_str
                     # are re-initialized with the just produced summary.
-                    if len(summary_sentences_str.split()) + len(candidate.split()) >= 400:
+                    if len(summary_sentences) == 5:
                         produced_summary = self.produce(summary_sentences_str)
+
+                        print(produced_summary)
                         
                         summary_sentences_str = produced_summary + ". "
                         summary_sentences = [produced_summary]
@@ -111,15 +113,6 @@ class Producer:
                                     max_length=512, 
                                     adequacy_threshold = 0.99, 
                                     fluency_threshold = 0.90)
-
-        print(f"Summary, part {self.counter}:\n")
-
-        for phrase in para_phrases:
-            print(phrase)
-
-        print()
-
-        self.counter += 1
 
         return para_phrases[-1][0]
 

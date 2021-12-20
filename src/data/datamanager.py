@@ -135,6 +135,7 @@ class DataManager:
   ) -> pd.DataFrame:
 
     self.dataset_path = get_dataset_path(datasets, tokenizer_name, tokenizer_type, binary_masks, contextual, only_relevant)
+    download_file(self.dataset_path)
 
     self.train_size = train_size
     self.test_size  = test_size
@@ -149,7 +150,6 @@ class DataManager:
     Returns the dataset requested 
     through the parameters given during the initialization of the DataManager class.
     """
-    download_file(self.dataset_path)
     return pd.read_csv(self.dataset_path)
     
 
