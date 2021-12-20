@@ -1,8 +1,10 @@
+from data.s3_connector import upload_file
 from parrot import Parrot
 import torch
 import warnings
 warnings.filterwarnings("ignore")
 from sentence_transformers import SentenceTransformer, util
+import re
 
 class Producer:
 
@@ -21,6 +23,8 @@ class Producer:
                 torch.cuda.manual_seed_all(seed)
 
         random_state(42)
+
+        self.counter = 1
         pass
 
     def update_summary(self, real_spans, predicted_spans):
@@ -44,35 +48,89 @@ class Producer:
             for item in self.predicted_summary:
                 print(item)
                 file.write('%s\n' % item)
+
+        upload_file('debug.txt')
         
+        # Initialize empty list of sentences.
+        # This list will contain the sentences that in future will be
+        # paraphrased to produce an update summary.
         summary_sentences = []
 
-        self.predicted_summary.sort(key=lambda s: len(s))
+        # Initialize empty string.
+        # This string is the stringified version of the list summary_sentences.
+        summary_sentences_str = ""
 
+        # For each predicted text
         for idx, candidate in enumerate(self.predicted_summary):
 
+            # Clean text
+            candidate = clean_sentence(candidate[0])
+
+            # If is first text considered, 
+            # just append it to summary_sentences and summary_sentences_str.
             if not idx:
-                summary_sentences.append(candidate[0])
+                summary_sentences_str = candidate + ". "
+                summary_sentences.append(candidate)
+            # Otherwise,
+            # compute the overall cosine similarity of the text
+            # with the candidate sentences.
             else:
-                overall_cos_sim = self.__get_overall_cosine_similarity(summary_sentences, candidate[0])
+                overall_cosine_similarity = self.__get_overall_cosine_similarity(summary_sentences, candidate)
 
-                if overall_cos_sim < self.threshold:
-                    summary_sentences.append(candidate[0])
+                # If the overall cosine similarity of the text
+                # is lower than a predefined threshold, 
+                # add the text to the summary_sentences list 
+                # and concatenate it to summary_sentences_str. 
+                if overall_cosine_similarity < self.threshold:
 
-        summary = ""
+                    # If appending candidate to summary_sentences
+                    # will produce a summary_sentences_str longer than 512 words,
+                    # a partial update summary is produced.
+                    #
+                    # Then, summary_sentences and summary_sentences_str
+                    # are re-initialized with the just produced summary.
+                    if len(summary_sentences_str.split()) + len(candidate.split()) >= 512:
+                        produced_summary = self.produce(summary_sentences_str)
+                        
+                        summary_sentences_str = produced_summary + ". "
+                        summary_sentences = [produced_summary]
+                    # Otherwise,
+                    # keep collecting the candidates
+                    # appending the candidate to summary_sentences
+                    # and concatenating it to summary_sentences_str.
+                    else:
+                        summary_sentences_str = summary_sentences_str + candidate + ". "
+                        summary_sentences.append(candidate)
 
-        for sentence in summary_sentences:
-            summary = summary + sentence + ". "
 
-        para_phrases = self.parrot.augment(input_phrase=summary,
-                                    use_gpu=False,
+    def produce(self, candidates: str):
+
+        para_phrases = self.parrot.augment(input_phrase=candidates,
                                     diversity_ranker="levenshtein",
                                     do_diverse=False, 
                                     max_return_phrases = 10, 
-                                    max_length=128, 
+                                    max_length=512, 
                                     adequacy_threshold = 0.99, 
                                     fluency_threshold = 0.90)
+
+        print(f"Summary, part {self.counter}:\n")
 
         for phrase in para_phrases:
             print(phrase)
 
+        print()
+
+        self.counter += 1
+
+        return para_phrases[-1]
+
+
+def clean_sentence(candidate: str):
+
+    candidate = candidate.replace("(s)", "")
+    candidate = candidate.replace("(e)", "")
+    candidate = candidate.replace("(S)", "")
+    candidate = candidate.replace("(E)", "")
+    candidate = re.sub('\s+', ' ', candidate)
+
+    return candidate

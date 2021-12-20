@@ -67,7 +67,10 @@ class Evaluator:
         for text, mask, predicted_mask in zip(decoded_texts, masks, preds):
           ground = ""
           prediction = ""
-          print()
+          
+          if verbose:
+            print()
+
           for word, visible, predicted in zip(text, mask, predicted_mask):
 
             if self.num_labels == 5:

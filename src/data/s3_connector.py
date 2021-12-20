@@ -26,7 +26,7 @@ def download_file(filename: str):
         aws_secret_access_key = config['AWSSecretKey']
         bucket                = config['Bucket']
 
-    print("> Downloading file from Amazon S3...")
+    print("> Downloading file {filename} from Amazon S3...")
     s3 = boto3.client('s3', aws_access_key_id = aws_access_key_id , aws_secret_access_key = aws_secret_access_key)
     s3.download_file(bucket, filename, filename)
     print("> File downloaded!")
