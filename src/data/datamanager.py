@@ -164,7 +164,7 @@ class DataManager:
     
     topic_idx = int(input("Choose topic: "))
     
-    test_data = data[data["query"] == topics[topic_idx]]
+    test_data = data[data["query"] == topics[topic_idx]].reset_index(drop=True).sort_values(by="timestamp")
 
     testing_set    = TrecDataset(test_data[['input_ids', 'attention_mask']], test_data['mask'])
 
