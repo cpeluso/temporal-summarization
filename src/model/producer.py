@@ -88,13 +88,13 @@ class Producer:
                     #
                     # Then, summary_sentences and summary_sentences_str
                     # are re-initialized with the just produced summary.
-                    if len(summary_sentences) == 5:
+                    if len(summary_sentences_str) + len(candidate) >= 100:
                         produced_summary = self.produce(summary_sentences_str)
 
                         print(produced_summary)
                         
-                        summary_sentences_str = produced_summary + ". "
-                        summary_sentences = [produced_summary]
+                        summary_sentences_str = candidate + ". "
+                        summary_sentences     = [candidate]
                     # Otherwise,
                     # keep collecting the candidates
                     # appending the candidate to summary_sentences
@@ -110,7 +110,6 @@ class Producer:
                                     diversity_ranker="levenshtein",
                                     do_diverse=False, 
                                     max_return_phrases = 10, 
-                                    max_length=512, 
                                     adequacy_threshold = 0.99, 
                                     fluency_threshold = 0.90)
 
