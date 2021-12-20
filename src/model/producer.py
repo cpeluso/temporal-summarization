@@ -46,7 +46,6 @@ class Producer:
         ### For debugging purposes only
         with open('debug.txt', 'w') as file:
             for item in self.predicted_summary:
-                print(item)
                 file.write('%s\n' % item)
 
         upload_file('debug.txt')
@@ -84,12 +83,12 @@ class Producer:
                 if overall_cosine_similarity < self.threshold:
 
                     # If appending candidate to summary_sentences
-                    # will produce a summary_sentences_str longer than 512 words,
+                    # will produce a summary_sentences_str longer than 400 words,
                     # a partial update summary is produced.
                     #
                     # Then, summary_sentences and summary_sentences_str
                     # are re-initialized with the just produced summary.
-                    if len(summary_sentences_str.split()) + len(candidate.split()) >= 512:
+                    if len(summary_sentences_str.split()) + len(candidate.split()) >= 400:
                         produced_summary = self.produce(summary_sentences_str)
                         
                         summary_sentences_str = produced_summary + ". "
@@ -122,7 +121,7 @@ class Producer:
 
         self.counter += 1
 
-        return para_phrases[-1]
+        return para_phrases[-1][0]
 
 
 def clean_sentence(candidate: str):
