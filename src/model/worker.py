@@ -313,6 +313,9 @@ def setup(*args):
     
     training_loader, validation_loader, testing_loader = torch_dataloaders
 
+    if load_pretrained_model:
+      testing_loader = datamanager.get_topic()
+
     if not load_pretrained_model:
 
         name  = __get_wandb_name(model, 

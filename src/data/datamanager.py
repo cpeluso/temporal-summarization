@@ -151,6 +151,30 @@ class DataManager:
     """
     download_file(self.dataset_path)
     return pd.read_csv(self.dataset_path)
+    
+    
+  def get_topic(self) -> TorchDataLoader:
+
+    data = self.get_dataset()
+
+    topics = list(data["query"].unique())
+
+    for idx, topic in enumerate(topics):
+      print(f"{idx}:\t{topic}")
+    
+    topic_idx = input(input("Choose topic: "))
+    
+    test_data = data[data["query"] == topics[topic_idx]]
+
+    testing_set    = TrecDataset(test_data[['input_ids', 'attention_mask']], test_data['mask'])
+
+    test_params = {
+      'batch_size':  1,
+      'shuffle':     False,
+      'num_workers': 0
+    }
+    
+    return TorchDataLoader(testing_set, **test_params)
 
 
   def split_datasets(

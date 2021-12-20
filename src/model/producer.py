@@ -28,7 +28,7 @@ class Producer:
         self.predicted_summary.extend(predicted_spans)
         pass
 
-    def __get_overall_cos_sim(self, summary_sentences, candidate):
+    def __get_overall_cosine_similarity(self, summary_sentences, candidate):
 
         embeddings1 = self.sentence_transfomer.encode(summary_sentences, convert_to_tensor=True)
         embeddings2 = self.sentence_transfomer.encode(candidate,         convert_to_tensor=True)
@@ -38,6 +38,12 @@ class Producer:
         return max(cosine_scores.tolist())[0]
 
     def show_summary(self):
+
+        ### For debugging purposes only
+        with open('debug.txt', 'w') as file:
+            for item in self.predicted_summary:
+                print(item)
+                file.write('%s\n' % item)
         
         summary_sentences = []
 
@@ -48,7 +54,7 @@ class Producer:
             if not idx:
                 summary_sentences.append(candidate[0])
             else:
-                overall_cos_sim = self.__get_overall_cos_sim(summary_sentences, candidate[0])
+                overall_cos_sim = self.__get_overall_cosine_similarity(summary_sentences, candidate[0])
 
                 if overall_cos_sim < self.threshold:
                     summary_sentences.append(candidate[0])

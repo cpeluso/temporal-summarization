@@ -36,13 +36,16 @@ class Evaluator:
         self.num_labels    = num_labels
         pass
 
-    def evaluate_batch(self, batch, predictions):
-        print("***** EVALUATION *****")
-        real_spans, predicted_spans = self.__evaluate(batch['input_ids'], batch['labels'], predictions)
-        print("**********************")
+    def evaluate_batch(self, batch, predictions, verbose = True):
+        if verbose:
+          print("***** EVALUATION *****")
+        real_spans, predicted_spans = self.__evaluate(batch['input_ids'], batch['labels'], predictions, verbose)
+        
+        if verbose:
+          print("**********************")
         return real_spans, predicted_spans
 
-    def __evaluate(self, input_ids, labels, predictions):
+    def __evaluate(self, input_ids, labels, predictions, verbose):
 
         masks = []
         preds = []
@@ -100,12 +103,16 @@ class Evaluator:
               if int(predicted) == 1:
                 prediction = prediction + word + " "
 
-          print(f"(R) => {ground}")
-          print(f"(P) => {prediction}")
+          if verbose:
+            print(f"(R) => {ground}")
+            print(f"(P) => {prediction}")
+
           real_spans.append([ground])
           predicted_spans.append([prediction])
         
-        print()
+        if verbose:
+          print()
+
         return real_spans, predicted_spans
 
     def __decode(self, input_ids):

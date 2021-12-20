@@ -304,7 +304,7 @@ class BertTrainer:
 
                 tr_accuracy, flattened_predictions = self.__compute_accuracy(labels, tr_logits, tr_accuracy)
             
-                real_spans, predicted_spans = self.evaluator.evaluate_batch(batch, flattened_predictions)
+                real_spans, predicted_spans = self.evaluator.evaluate_batch(batch, flattened_predictions, verbose = False)
                 producer.update_summary(real_spans, predicted_spans)
 
             epoch_loss  = tr_loss / nb_tr_steps
