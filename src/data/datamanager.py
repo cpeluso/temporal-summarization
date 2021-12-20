@@ -152,7 +152,7 @@ class DataManager:
     download_file(self.dataset_path)
     return pd.read_csv(self.dataset_path)
     
-    
+
   def get_topic(self) -> TorchDataLoader:
 
     data = self.get_dataset()
@@ -162,7 +162,7 @@ class DataManager:
     for idx, topic in enumerate(topics):
       print(f"{idx}:\t{topic}")
     
-    topic_idx = input(input("Choose topic: "))
+    topic_idx = int(input("Choose topic: "))
     
     test_data = data[data["query"] == topics[topic_idx]]
 
