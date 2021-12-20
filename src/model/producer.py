@@ -1,4 +1,4 @@
-from data.s3_connector import upload_file
+from src.data.s3_connector import upload_file
 from parrot import Parrot
 import torch
 import warnings
