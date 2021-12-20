@@ -38,13 +38,17 @@ class Evaluator:
 
     def evaluate_batch(self, batch, predictions):
         print("***** EVALUATION *****")
-        self.__evaluate(batch['input_ids'], batch['labels'], predictions)
+        real_spans, predicted_spans = self.__evaluate(batch['input_ids'], batch['labels'], predictions)
         print("**********************")
+        return real_spans, predicted_spans
 
     def __evaluate(self, input_ids, labels, predictions):
 
         masks = []
         preds = []
+
+        real_spans      = []
+        predicted_spans = []
         
         for mask, pred in zip(labels, predictions):
           masks.append(mask[0].tolist())
@@ -98,8 +102,11 @@ class Evaluator:
 
           print(f"(R) => {ground}")
           print(f"(P) => {prediction}")
+          real_spans.append([ground])
+          predicted_spans.append([prediction])
         
         print()
+        return real_spans, predicted_spans
 
     def __decode(self, input_ids):
         decoded_str_text = self.tokenizer.decode(input_ids)
