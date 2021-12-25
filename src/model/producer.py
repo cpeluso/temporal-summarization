@@ -1,21 +1,30 @@
-from src.data.s3_connector import upload_file
-from parrot import Parrot
 import torch
-import warnings
-warnings.filterwarnings("ignore")
-from sentence_transformers import SentenceTransformer, util
 import re
+import math
+from transformers import PegasusForConditionalGeneration, PegasusTokenizer
+from sentence_transformers import SentenceTransformer, util
 
 class Producer:
 
-    def __init__(self, threshold = 0.6):
+    def __init__(self, base_threshold = 0.5):
+        
+        self.torch_device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        
         self.sentence_transfomer = SentenceTransformer('all-MiniLM-L6-v2')
-        self.parrot = Parrot(model_tag="prithivida/parrot_paraphraser_on_T5", use_gpu=torch.cuda.is_available())
 
-        self.threshold = threshold
+        pegasus_model_name = 'tuner007/pegasus_paraphrase'
+        
+        self.pegasus_tokenizer = PegasusTokenizer.from_pretrained(pegasus_model_name)
+        
+        self.pegasus = PegasusForConditionalGeneration.from_pretrained(pegasus_model_name).to(self.torch_device)
 
-        self.real_summary      = []
-        self.predicted_summary = []
+        self.num_return_sequences = 10
+        self.num_beams            = 10
+
+        self.summary_sentences = []
+        self.base_threshold    = base_threshold
+        self.threshold_decay   = 0.005
+        self.threshold         = base_threshold
 
         def random_state(seed):
             torch.manual_seed(seed)
@@ -27,97 +36,79 @@ class Producer:
         self.counter = 1
         pass
 
-    def update_summary(self, real_spans, predicted_spans):
-        self.real_summary     .extend(real_spans)
-        self.predicted_summary.extend(predicted_spans)
-        pass
 
-    def __get_overall_cosine_similarity(self, summary_sentences, candidate):
+    def __update_threshold(self):
+        self.threshold = self.base_threshold * math.exp(-self.threshold_decay * len(self.summary_sentences))
 
-        embeddings1 = self.sentence_transfomer.encode(summary_sentences, convert_to_tensor=True)
-        embeddings2 = self.sentence_transfomer.encode(candidate,         convert_to_tensor=True)
+
+    def __compute_cosine_similarities(self, references, candidate):
+
+        embeddings1 = self.sentence_transfomer.encode(references, convert_to_tensor = True)
+        embeddings2 = self.sentence_transfomer.encode(candidate,  convert_to_tensor = True)
 
         cosine_scores = util.pytorch_cos_sim(embeddings1, embeddings2)
 
-        return max(cosine_scores.tolist())[0]
+        return cosine_scores
+
+
+    def __get_overall_cosine_similarity(self, candidate):
+
+        return max(self.__compute_cosine_similarities(self.summary_sentences, candidate).tolist())[0]
+
+
+    def __select_most_representative_paraphrased_sentence(self, paraphrased_texts, original_text):
+
+        cosine_scores = self.__compute_cosine_similarities(paraphrased_texts, original_text)
+        f = lambda i: cosine_scores[i]
+        idx_sentence = max(range(len(cosine_scores)), key=f)
+
+        return paraphrased_texts[idx_sentence]
+
+
+    def __paraphrase(self, input_text):
+
+        batch = self.pegasus_tokenizer([input_text],
+                          truncation=True,
+                          padding='longest',
+                          max_length=60, 
+                          return_tensors="pt").to(self.torch_device)
+
+        translated = self.pegasus.generate(**batch,
+                                           max_length=60,
+                                           num_beams=self.num_beams, 
+                                           num_return_sequences=self.num_return_sequences)
+        
+        paraphrased_texts = self.pegasus_tokenizer.batch_decode(translated, 
+                                                       skip_special_tokens=True)
+        
+        return self.__select_most_representative_paraphrased_sentence(paraphrased_texts, input_text)
 
     
-    def debug(self):
+    def __emit(self, paraphrased_candidate):
+        print(f"{self.counter}\t{len(self.summary_sentences)}\t{paraphrased_candidate}")
+        self.summary_sentences.append(paraphrased_candidate)
+        return
 
-        ### For debugging purposes only
-        with open('debug.txt', 'w') as file:
-            for item in self.predicted_summary:
-                file.write('%s\n' % item)
+    def update_summary(self, candidate: list):
 
-        upload_file('debug.txt')
+        self.__update_threshold()
 
+        candidate_str = candidate[0]
+        candidate_str = clean_sentence(candidate_str)
 
-    def show_summary(self):
+        paraphrased_candidate = self.__paraphrase(candidate_str)
+
+        if self.counter == 1:
+
+            self.__emit(paraphrased_candidate)
+
+        if self.__get_overall_cosine_similarity(candidate_str) < self.threshold:
+
+            self.__emit(paraphrased_candidate)
+
+        self.counter += 1
         
-        # Initialize empty list of sentences.
-        # This list will contain the sentences that in future will be
-        # paraphrased to produce an update summary.
-        summary_sentences = []
-
-        # Initialize empty string.
-        # This string is the stringified version of the list summary_sentences.
-        summary_sentences_str = ""
-
-        # For each predicted text
-        for idx, candidate in enumerate(self.predicted_summary):
-
-            # Clean text
-            candidate = clean_sentence(candidate[0])
-
-            # If is first text considered, 
-            # just append it to summary_sentences and summary_sentences_str.
-            if not idx:
-                summary_sentences_str = candidate + ". "
-                summary_sentences.append(candidate)
-            # Otherwise,
-            # compute the overall cosine similarity of the text
-            # with the candidate sentences.
-            else:
-                overall_cosine_similarity = self.__get_overall_cosine_similarity(summary_sentences, candidate)
-
-                # If the overall cosine similarity of the text
-                # is lower than a predefined threshold, 
-                # add the text to the summary_sentences list 
-                # and concatenate it to summary_sentences_str. 
-                if overall_cosine_similarity < self.threshold:
-
-                    # If appending candidate to summary_sentences
-                    # will produce a summary_sentences_str longer than 400 words,
-                    # a partial update summary is produced.
-                    #
-                    # Then, summary_sentences and summary_sentences_str
-                    # are re-initialized with the just produced summary.
-                    if len(summary_sentences) == 3:
-                        produced_summary = self.produce(summary_sentences_str)
-
-                        print(produced_summary)
-                        
-                        summary_sentences_str = ""
-                        summary_sentences     = []
-
-                    # Keep collecting the candidates
-                    # appending the candidate to summary_sentences
-                    # and concatenating it to summary_sentences_str.
-                    summary_sentences_str = summary_sentences_str + candidate + ". "
-                    summary_sentences.append(candidate)
-
-
-    def produce(self, candidates: str):
-
-        para_phrases = self.parrot.augment(input_phrase=candidates,
-                                    diversity_ranker="levenshtein",
-                                    do_diverse=False, 
-                                    max_return_phrases = 10, 
-                                    adequacy_threshold = 0.99, 
-                                    fluency_threshold = 0.90)
-
-        return para_phrases[-1][0]
-
+        return
 
 def clean_sentence(candidate: str):
 

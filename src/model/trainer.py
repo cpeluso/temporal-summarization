@@ -304,12 +304,10 @@ class BertTrainer:
 
                 tr_accuracy, flattened_predictions = self.__compute_accuracy(labels, tr_logits, tr_accuracy)
             
-                real_spans, predicted_spans = self.evaluator.evaluate_batch(batch, flattened_predictions, verbose = False)
-                producer.update_summary(real_spans, predicted_spans)
+                _, predicted_spans = self.evaluator.evaluate_batch(batch, flattened_predictions, verbose = False)
+                producer.update_summary(predicted_spans)
 
             epoch_loss  = tr_loss / nb_tr_steps
             tr_accuracy = tr_accuracy / nb_tr_steps
             print(f"Loss: {epoch_loss}")
             print(f"Accuracy: {tr_accuracy}")
-
-        producer.debug()
