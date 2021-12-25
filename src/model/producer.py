@@ -85,7 +85,7 @@ class Producer:
 
     
     def __emit(self, paraphrased_candidate):
-        print(f"{self.counter}\t{len(self.summary_sentences)}\t{paraphrased_candidate}")
+        print(f"{len(self.summary_sentences)}\t{paraphrased_candidate}")
         self.summary_sentences.append(paraphrased_candidate)
         return
 
