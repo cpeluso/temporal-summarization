@@ -312,4 +312,4 @@ class BertTrainer:
             print(f"Loss: {epoch_loss}")
             print(f"Accuracy: {tr_accuracy}")
 
-        producer.show_summary()
+        producer.debug()

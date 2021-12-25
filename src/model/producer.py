@@ -41,7 +41,8 @@ class Producer:
 
         return max(cosine_scores.tolist())[0]
 
-    def show_summary(self):
+    
+    def debug(self):
 
         ### For debugging purposes only
         with open('debug.txt', 'w') as file:
@@ -49,6 +50,9 @@ class Producer:
                 file.write('%s\n' % item)
 
         upload_file('debug.txt')
+
+
+    def show_summary(self):
         
         # Initialize empty list of sentences.
         # This list will contain the sentences that in future will be
@@ -93,8 +97,8 @@ class Producer:
 
                         print(produced_summary)
                         
-                        summary_sentences_str = candidate + ". "
-                        summary_sentences     = [candidate]
+                        summary_sentences_str = ""
+                        summary_sentences     = []
 
                     # Keep collecting the candidates
                     # appending the candidate to summary_sentences
