@@ -110,8 +110,8 @@ class Evaluator:
             print(f"(R) => {ground}")
             print(f"(P) => {prediction}")
 
-          real_spans.append([ground])
-          predicted_spans.append([prediction])
+          real_spans.append(ground)
+          predicted_spans.append(prediction)
         
         if verbose:
           print()
