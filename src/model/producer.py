@@ -21,10 +21,11 @@ class Producer:
         self.num_return_sequences = 10
         self.num_beams            = 10
 
-        self.summary_sentences = []
-        self.base_threshold    = base_threshold
-        self.threshold_decay   = 0.005
-        self.threshold         = base_threshold
+        self.summary_sentences     = []
+        self.base_threshold        = base_threshold
+        self.threshold_decay       = 0.005
+        self.upper_bound_threshold = base_threshold
+        self.lower_bound_threshold = 0.10
 
         def random_state(seed):
             torch.manual_seed(seed)
@@ -38,7 +39,7 @@ class Producer:
 
 
     def __update_threshold(self):
-        self.threshold = self.base_threshold * math.exp(-self.threshold_decay * len(self.summary_sentences))
+        self.upper_bound_threshold = self.base_threshold * math.exp(-self.threshold_decay * len(self.summary_sentences))
 
 
     def __compute_cosine_similarities(self, references, candidate):
@@ -101,13 +102,18 @@ class Producer:
         if self.counter == 1:
 
             self.__emit(paraphrased_candidate)
+            self.counter += 1
+            return
 
-        if self.__get_overall_cosine_similarity(candidate_str) < self.threshold:
+        cosine_similarity = self.__get_overall_cosine_similarity(candidate_str)
+
+        if cosine_similarity >= self.lower_bound_threshold and cosine_similarity < self.upper_bound_threshold:
 
             self.__emit(paraphrased_candidate)
+            self.counter += 1
+            return
 
         self.counter += 1
-        
         return
 
 def clean_sentence(candidate: str):
