@@ -25,7 +25,7 @@ class Producer:
         self.base_threshold        = base_threshold
         self.threshold_decay       = 0.005
         self.upper_bound_threshold = base_threshold
-        self.lower_bound_threshold = 0.10
+        self.lower_bound_threshold = 0.20
 
         def random_state(seed):
             torch.manual_seed(seed)
