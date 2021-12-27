@@ -32,7 +32,7 @@ class Producer:
             if torch.cuda.is_available():
                 torch.cuda.manual_seed_all(seed)
 
-        random_state(42)
+        random_state(42)          
 
         self.counter = 1
         pass
@@ -98,6 +98,11 @@ class Producer:
         candidate_str = clean_sentence(candidate_str)
 
         paraphrased_candidate = self.__paraphrase(candidate_str)
+
+        if paraphrased_candidate == candidate_str and self.counter > 1:
+
+            self.counter += 1
+            return
 
         if self.counter == 1:
 
