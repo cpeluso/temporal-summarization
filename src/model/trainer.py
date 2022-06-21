@@ -4,7 +4,7 @@ import sys
 import math
 from sklearn.metrics import accuracy_score
 
-from src.model.evaluator import *
+from model.qualitative_evaluator import *
 from utils.tokenizers import tokenizers
 from src.data.s3_connector import download_file, upload_file
 from src.model.producer import Producer
@@ -69,7 +69,7 @@ class BertTrainer:
       self.best_validation_loss     = 1_000_000
       self.best_validation_accuracy = 0
 
-      self.evaluator = Evaluator(self.tokenizer, max_num_words, self.model.num_labels)
+      self.evaluator = QualitativeEvaluator(self.tokenizer, max_num_words, self.model.num_labels)
       pass
 
     def __unpack_batch(self, batch):

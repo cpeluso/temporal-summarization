@@ -512,16 +512,16 @@ def main(args):
         args.binaryrel
     )
 
-if __name__ == "__main__":
-    argparser = argparse.ArgumentParser(description='Computes Evaluation Metrics for Temporal Summarization 2013 Track')
-    argparser.add_argument('-n', '--nuggets', help='Nuggets File (Default: ../results/nuggets.tsv)', default="../results/nuggets.tsv")
-    argparser.add_argument('-u', '--updates', help='Updates File (Default: ../results/pooled_updates.tsv)', default="../results/pooled_updates.tsv")
-    argparser.add_argument('-m', '--matches', help='Matches File (Default: ../results/matches.tsv)', default="../results/matches.tsv")
-    argparser.add_argument('runs', nargs="+", help='Runs File(s) (SUBMISSION.sus)')
-    argparser.add_argument('-d', '--debug', action='store_true', help='Debug mode (lots of output)')
-    argparser.add_argument('-o', '--nuggetsfile', help='Create a nuggets matching file as well (Used by nuggets plotting script)')
-    argparser.add_argument('-b', '--binaryrel', action='store_true', help='Use binary relevance instead of graded relevance')
+# if __name__ == "__main__":
+#     argparser = argparse.ArgumentParser(description='Computes Evaluation Metrics for Temporal Summarization 2013 Track')
+#     argparser.add_argument('-n', '--nuggets', help='Nuggets File (Default: ../results/nuggets.tsv)', default="../results/nuggets.tsv")
+#     argparser.add_argument('-u', '--updates', help='Updates File (Default: ../results/pooled_updates.tsv)', default="../results/pooled_updates.tsv")
+#     argparser.add_argument('-m', '--matches', help='Matches File (Default: ../results/matches.tsv)', default="../results/matches.tsv")
+#     argparser.add_argument('runs', nargs="+", help='Runs File(s) (SUBMISSION.sus)')
+#     argparser.add_argument('-d', '--debug', action='store_true', help='Debug mode (lots of output)')
+#     argparser.add_argument('-o', '--nuggetsfile', help='Create a nuggets matching file as well (Used by nuggets plotting script)')
+#     argparser.add_argument('-b', '--binaryrel', action='store_true', help='Use binary relevance instead of graded relevance')
 
-    main(argparser.parse_args())
+#     main(argparser.parse_args())
 
 # vim: ts=4 sw=4 expandtab

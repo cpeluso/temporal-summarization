@@ -1,8 +1,8 @@
-class Evaluator:
+class QualitativeEvaluator:
     """
-    Evaluator class.
+    QualitativeEvaluator class.
 
-    The Evaluator class has the purpose of qualitatively evaluating the predictions of the model
+    The QualitativeEvaluator class has the purpose of qualitatively evaluating the predictions of the model
     and compare them with the ground truth.
 
     Attributes
