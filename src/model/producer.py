@@ -115,6 +115,9 @@ class Producer:
 
         self.counter += 1
         return
+    
+    def run_evaluation(self):
+        return 
 
 def clean_sentence(candidate: str):
 
