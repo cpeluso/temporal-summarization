@@ -43,7 +43,7 @@ def generate_csv(
         * context:        bool, if True, the context is added during the embedding phase
         * only_relevant:  bool  if True, only the relevant updates are retrieved
     """
-    data = load_data(dataset, only_relevant, tokenizer_name, tokenizer_type, MAX_NUM_WORDS, binary, context, test = True)
+    data = load_data(dataset, only_relevant, tokenizer_name, tokenizer_type, MAX_NUM_WORDS, binary, context, test = False)
     data.to_csv(dataset_path, index = False)
     return
 

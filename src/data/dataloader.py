@@ -167,7 +167,7 @@ class DataLoader:
         """
 
         topics, matches, nuggets, updates = self.__read_data(dataset)
-        relevant_df = self.__load_relevant_updates(matches, updates, nuggets)
+        relevant_df = self.__load_relevant_updates(matches, updates, nuggets, topics)
 
         if self.only_relevant:
             df = relevant_df
@@ -204,7 +204,8 @@ class DataLoader:
             self,
             matches_df: pd.DataFrame,
             updates_df: pd.DataFrame,
-            nuggets_df: pd.DataFrame
+            nuggets_df: pd.DataFrame,
+            topics_df:  pd.DataFrame
     ) -> pd.DataFrame:
         """
         Joins the matches DataFrame with the updates DataFrame.
@@ -216,12 +217,13 @@ class DataLoader:
         --------
 
         Returns a pandas DataFrame consisting of
-        ['update_text', 'match_start', 'match_end', 'query', 'relevant'] columns.
+        ["update_id", "update_text", "match_start", "match_end", "query", "timestamp", "query_id"] columns.
         """
 
         df = matches_df \
             .merge(updates_df, left_on='update_id', right_on='update_id') \
-            .merge(nuggets_df, left_on='nugget_id', right_on='nugget_id')[["update_text", "match_start", "match_end", "query", "timestamp"]]
+            .merge(nuggets_df, left_on='nugget_id', right_on='nugget_id')[["update_id", "update_text", "match_start", "match_end", "query", "timestamp"]] \
+            .merge(topics_df,  left_on='query', right_on='query')
 
         df['relevant'] = True
 
