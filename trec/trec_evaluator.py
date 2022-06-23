@@ -166,7 +166,7 @@ class TrecEvaluator:
             
                 _, predicted_spans = self.qualitative_evaluator.evaluate_batch(batch, flattened_predictions, verbose = False)
                 
-                emitted = producer.update_summary(predicted_spans)  
+                emitted = producer.update_summary(predicted_spans, verbose=False)  
 
                 if emitted:
                     self.__update_run_file(
