@@ -22,8 +22,6 @@ def make_ids(row: pd.Series):
 
 class TrecEvaluator:
 
-    
-
     def __init__(
         self,
         model_path   = "models/bert-uncased/2_classes/context_False/only-relevant_True/model.pth",
