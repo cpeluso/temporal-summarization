@@ -124,7 +124,7 @@ class TrecEvaluator:
     ) -> list:
 
         runs_filename = []
-        for query_id in [1,2,3]: #self.query_ids
+        for query_id in self.query_ids:
 
             run_filename = "./results/run-" + str(query_id) +  self.base_run_filename 
 
