@@ -119,6 +119,25 @@ class TrecEvaluator:
 
       return 
 
+    def make_runs(
+        self
+    ) -> list:
+
+        runs_filename = []
+        for query_id in [1,2,3]: #self.query_ids
+
+            run_filename = "./results/run-" + str(query_id) +  self.base_run_filename 
+
+            if exists(run_filename):
+              open(run_filename, "w").close()
+                        
+            self.make_run(int(query_id))
+            print(" - - - - - - - - - - - ")
+            
+            runs_filename.append(run_filename)
+
+        return runs_filename
+
     def make_run(
         self,
         query_id
