@@ -36,7 +36,10 @@ class TrecEvaluator:
             os.makedirs("models/bert-uncased/2_classes/context_False/only-relevant_True")
 
         if not exists("data"):
-            os.makedir("data")
+            os.makedirs("data")
+
+        if not exists("results"):
+            os.makedirs("results")
 
         if not exists(self.nuggets_filename):
             download_file(self.nuggets_filename)
@@ -85,7 +88,7 @@ class TrecEvaluator:
         runs_filename = []
         for query_id in self.query_ids:
 
-            run_filename = "run-" + str(query_id) +  self.base_run_filename 
+            run_filename = "./results/run-" + str(query_id) +  self.base_run_filename 
 
             if exists(run_filename):
               continue
@@ -106,7 +109,7 @@ class TrecEvaluator:
         self,
         query_id,
     ):
-      runs_filename = "run-" + str(query_id) +  self.base_run_filename 
+      runs_filename = "./results/run-" + str(query_id) +  self.base_run_filename 
 
       self.make_run(query_id)
       print()
@@ -224,7 +227,7 @@ class TrecEvaluator:
         decision_timestamp,
         confidence_value
     ):
-        run_filename = "run-" + str(query_id) + self.base_run_filename 
+        run_filename = "./results/run-" + str(query_id) + self.base_run_filename 
         
         with open(run_filename, "a") as run_fp:
             print(f"{query_id} {team_id} {run_id} {document_id} {sentence_id} {decision_timestamp} {confidence_value}")
