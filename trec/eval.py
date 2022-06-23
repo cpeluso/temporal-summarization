@@ -1,9 +1,10 @@
-#!/usr/bin/python
 from __future__ import division
+from future.utils import iteritems
 import argparse, sys, os
 from math import exp, pi, atan
 from pprint import pprint
 import numpy as np
+import itertools
 
 # Expects >=4 files: Nuggets File, Updates File, Match File, Runs File(s)
 
@@ -75,8 +76,8 @@ def make_updid(did, sid):
 
 # Performs all accumulation of metrics
 def calc_metric(nuggets, allsamples, allruns, matches, nuggtots, nuggetsh):
-    print "\t".join(("QueryID", "TeamID", "RunID", "# Updates", "Expected Gain", "Expected Latency Gain", "Comprehensiveness", "Latency Comprehensiveness", "Expected Verbosity", "Expected Latency", 
-                    "Expected Confidence-Biased Gain", "Expected Confidence-Biased Latency Gain", "Confidence-Biased Comprehensiveness", "Confidence-Biased Latency Comprehensiveness", "Expected Confidence-Biased Verbosity", "Expected Confidence-Biased Latency"))
+    print ("\t".join(("QueryID", "TeamID", "RunID", "# Updates", "Expected Gain", "Expected Latency Gain", "Comprehensiveness", "Latency Comprehensiveness", "Expected Verbosity", "Expected Latency", 
+                    "Expected Confidence-Biased Gain", "Expected Confidence-Biased Latency Gain", "Confidence-Biased Comprehensiveness", "Confidence-Biased Latency Comprehensiveness", "Expected Confidence-Biased Verbosity", "Expected Confidence-Biased Latency")))
 
     results = {}
     totals = {}
@@ -116,7 +117,7 @@ def calc_metric(nuggets, allsamples, allruns, matches, nuggtots, nuggetsh):
                 # For each update
                 for upd in sorted(docs, key=lambda x: x["time"]):
                     updid = make_updid(upd["did"], upd["sid"])
-                    if (updid not in samples):
+                    if (updid not in list(samples.keys())):
                         continue
                     supd = samples[updid]
                     # Handle exact duplicates
@@ -135,13 +136,13 @@ def calc_metric(nuggets, allsamples, allruns, matches, nuggtots, nuggetsh):
 
                     # Handle duplicate updates and non-matching updates
                     if updid not in seen and updid in matches[qid]:
-
+                        
                         # For each match
                         for match in matches[qid][updid]:
                             try:
                                 # Get associated nugget
                                 nugg = nuggets[qid][match["nid"]]
-                            except KeyError, err:
+                            except KeyError as err:
                                 printd("Match contains invalid nugget QID:%s, NID:%s; %s" % (qid, match["nid"], err))
                                 continue
 
@@ -182,7 +183,7 @@ def calc_metric(nuggets, allsamples, allruns, matches, nuggtots, nuggetsh):
                             # Debug and output information
                             printd("\tMatch: I%d R%0.4f NT%0.2f UT%0.2f L%0.4f LEN%0.2f %s" % (nugg["impt"], rel, nugg["time"]/latency_step, upd["time"]/latency_step, latency, nugg["length"], nugg["text"]))
                             if nuggetsh is not None:
-                                print >> nuggetsh, "%s\t%s\t%s\t%s\t%d\t%d\t%d" % (qid, tid, rid, match["nid"], nugg["time"], upd["time"], sumwords + supd["text"].count(" ", 0, updst))
+                                printd("%s\t%s\t%s\t%s\t%d\t%d\t%d" % (qid, tid, rid, match["nid"], nugg["time"], upd["time"], sumwords + supd["text"].count(" ", 0, updst)))
 
                     # Calculate update verbosity
                     verbosity = verbosity_discount(supd["length"], sum(updarr), nuggtots[qid]["length"])
@@ -226,7 +227,7 @@ def calc_metric(nuggets, allsamples, allruns, matches, nuggtots, nuggetsh):
                     if sumconf > 0:
                         comphensconf = sumconfrecall / (nuggtots[qid]["impt"] * sumconf)
                         comphensconflat = sumconflatrecall / (nuggtots[qid]["impt"] * sumconf)
-                except KeyError, err:
+                except KeyError as err:
                     printd("Match contains QID not in Nuggets File %s" % (err))
                     continue
                 expgain = 0
@@ -242,7 +243,7 @@ def calc_metric(nuggets, allsamples, allruns, matches, nuggtots, nuggetsh):
                 if nupd > 0:
                     tmatch = nmatch
                     sumimpt = 0
-                    for impt, nimpt in sorted(nuggtots[qid]["counts"].iteritems(), key=lambda x: x[1], reverse=True):
+                    for impt, nimpt in sorted(iteritems(nuggtots[qid]["counts"]), key=lambda x: x[1], reverse=True):
                       if tmatch <= 0:
                         break
                       num = min(nimpt, tmatch)
@@ -265,7 +266,7 @@ def calc_metric(nuggets, allsamples, allruns, matches, nuggtots, nuggetsh):
                 printd("QID %s\tTID %s\tRID %s\tNU %d\tP %0.4f\t LP %0.4f\tC %0.4f\tLC %0.4f\tEV %0.4f\tEL %0.4f\tECG %0.4f\tECLG %0.4f\tCC %0.4f\tCLC %0.4f\tECV %0.4f\t ECL %0.4f\n" % (qid, tid, rid, nupd, expgain, explatgain, comphens, comphenslat, expverb, explat, expconfgain, expconflatgain, comphensconf, comphensconflat, expconfverb, expconflat))
 
                 # Verbose information on missing nuggets
-                for nid, nugg in sorted(nuggets[qid].iteritems(), key=lambda x: x[1]["impt"]):
+                for nid, nugg in sorted(iteritems(nuggets[qid]), key=lambda x: x[1]["impt"]):
                     if nid not in seen:
                         printd("%s %0.2f %s" % (nid, norm_impt(nugg), nugg["text"]))
 
@@ -274,7 +275,7 @@ def calc_metric(nuggets, allsamples, allruns, matches, nuggtots, nuggetsh):
                 # Store accumulations for Run and Global statistics
                 measures = (nupd, expgain, explatgain, comphens, comphenslat, expverb, explat, expconfgain, expconflatgain, comphensconf, comphensconflat, expconfverb, expconflat)
                 ostr =  ("%s\t%s\t%s\t" % (qid, tid, rid)) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in measures])
-                print ostr
+                print(ostr)
                 if qid not in results:
                     results[qid] = []
                 trid = "%s-%s" % (tid, rid)
@@ -289,10 +290,10 @@ def calc_metric(nuggets, allsamples, allruns, matches, nuggtots, nuggetsh):
         rstd = np.std(results[qid], 0)
         rmin = np.amin(results[qid], 0)
         rmax = np.amax(results[qid], 0)
-        print ("%s\tAVG\t-\t" % (qid)) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in ravg])
-        print ("%s\tSTD\t-\t" % (qid)) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rstd])
-        print ("%s\tMIN\t-\t" % (qid)) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rmin])
-        print ("%s\tMAX\t-\t" % (qid)) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rmax])
+        print ("%s\tAVG\t-\t" % (qid) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in ravg]))
+        print ("%s\tSTD\t-\t" % (qid) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rstd]))
+        print ("%s\tMIN\t-\t" % (qid) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rmin]))
+        print ("%s\tMAX\t-\t" % (qid) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rmax]))
 
     # Run statistics
     for res in sorted(totals.values(), key=lambda x: x["metrics"][sorter], reverse=True):
@@ -300,21 +301,21 @@ def calc_metric(nuggets, allsamples, allruns, matches, nuggtots, nuggetsh):
         rstd = np.std(res["metrics"], 0)
         rmin = np.amin(res["metrics"], 0)
         rmax = np.amax(res["metrics"], 0)
-        print ("AVG\t%s\t%s\t" % (res["tid"], res["rid"])) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in ravg])
-        print ("STD\t%s\t%s\t" % (res["tid"], res["rid"])) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rstd])
-        print ("MIN\t%s\t%s\t" % (res["tid"], res["rid"])) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rmin])
-        print ("MAX\t%s\t%s\t" % (res["tid"], res["rid"])) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rmax])
+        print ("AVG\t%s\t%s\t" % (res["tid"], res["rid"]) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in ravg]))
+        print ("STD\t%s\t%s\t" % (res["tid"], res["rid"]) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rstd]))
+        print ("MIN\t%s\t%s\t" % (res["tid"], res["rid"]) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rmin]))
+        print ("MAX\t%s\t%s\t" % (res["tid"], res["rid"]) + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rmax]))
 
     # Global statistics
-    resultsarr = list(itertools.chain.from_iterable(results.itervalues()))
+    resultsarr = list(itertools.chain.from_iterable(results.values()))
     ravg = np.mean(resultsarr, 0)
     rstd = np.std(resultsarr, 0)
     rmin = np.amin(resultsarr, 0)
     rmax = np.amax(resultsarr, 0)
-    print "AVG\tALL\t-\t" + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in ravg])
-    print "STD\tALL\t-\t" + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rstd])
-    print "MIN\tALL\t-\t" + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rmin])
-    print "MAX\tALL\t-\t" + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rmax])
+    print ("AVG\tALL\t-\t" + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in ravg]))
+    print ("STD\tALL\t-\t" + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rstd]))
+    print ("MIN\tALL\t-\t" + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rmin]))
+    print ("MAX\tALL\t-\t" + "\t".join(["%d" % x if type(x) == "int" else "%0.4f" % x for x in rmax]))
 
 # Normalizes the importance score from Real>=0->[0-1], optionally weighting it by the proportion of the nugget matched
 # If binary relevance, simple returns 1 if rel > 0
@@ -363,9 +364,9 @@ def read_nuggets(nuggets_file):
                 else:
                   nuggtots[qid]["counts"][impt] += 1
 
-            except Exception, err:
-                print  >> sys.stderr, "Invalid line in %s, line %d: %s" % (nuggets_file, linen, err)
-    for qid, nuggs in nuggets.iteritems():
+            except Exception as err:
+                print("Invalid line in %s, line %d: %s" % (nuggets_file, linen, err), file = sys.stderr)
+    for qid, nuggs in iteritems(nuggets):
         nuggtots[qid]["length"] /= len(nuggs.keys())
 
     return (nuggets, nuggtots)
@@ -399,9 +400,8 @@ def read_updates(updates_file):
                     dup = None
                     utext = ""
                 supdates[qid][updid] = { "length": int(parts[4]), "duplicate": dup, "text": utext }
-
-            except Exception, err:
-                print  >> sys.stderr, "Invalid line in %s, line %d: %s" % (updates_file, linen, err)
+            except Exception as err:
+                print("Invalid line in %s, line %d: %s" % (updates_file, linen, err), file=sys.stderr) 
     return supdates
 
 # Reads the Runs file(s)
@@ -437,8 +437,8 @@ def read_runs(runs_files):
                         conf = 1000
                     runs[qid][teamid][runid].append({ "did": docid, "sid": sid, "time": int(parts[5]), "conf": conf, "length": length })
 
-                except Exception, err:
-                    print  >> sys.stderr, "Invalid line in %s, line %d: %s" % (runs_file, linen, err)
+                except Exception as err:
+                    print("Invalid line in %s, line %d: %s" % (runs_file, linen, err), file = sys.stderr)   
     return runs
 
 # Reads the matches file
@@ -462,20 +462,20 @@ def read_matches(matches_file):
                     matches[qid][updid] = []
                 matches[qid][updid].append({ "nid": nid, "updstart": int(parts[3]), "updend": int(parts[4])})
 
-            except Exception, err:
-                print  >> sys.stderr, "Invalid line in %s, line %d: %s" % (matches_file, linen, err)
+            except Exception as err:
+                print("Invalid line in %s, line %d: %s" % (matches_file, linen, err), file=sys.stderr) 
     return matches
 
 def printd(string):
     if debug:
-        print >> sys.stderr, string
+        print(string, file=sys.stderr)
 
 def evaluation_script(
     nuggets_filename, 
     updates_filename, 
     runs_filename,
     matches_filename,
-    nuggets_matching_filename = "nugget_matching",
+    nuggets_matching_filename = None,
     args_debug = False,
     args_binaryrel = False
     ):
@@ -493,7 +493,7 @@ def evaluation_script(
 
     if nuggets_matching_filename:
         nuggetsh = open(nuggets_matching_filename,'w')
-        print >> nuggetsh, "\t".join(("QID", "TID", "RID", "NID", "NTIME", "UTIME","CWORDS"))
+        print ("\t".join(("QID", "TID", "RID", "NID", "NTIME", "UTIME","CWORDS")), file=nuggetsh)
     else:
         nuggetsh = None
 

@@ -103,7 +103,7 @@ class Producer:
 
             self.__emit(paraphrased_candidate)
             self.counter += 1
-            return
+            return True
 
         cosine_similarity = self.__get_overall_cosine_similarity(candidate_str)
 
@@ -111,10 +111,10 @@ class Producer:
 
             self.__emit(paraphrased_candidate)
             self.counter += 1
-            return
+            return True
 
         self.counter += 1
-        return
+        return False
 
 def clean_sentence(candidate: str):
 
