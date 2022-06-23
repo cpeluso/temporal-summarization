@@ -22,12 +22,32 @@ def make_ids(row: pd.Series):
 
 class TrecEvaluator:
 
+    
+
     def __init__(
         self,
         model_path   = "models/bert-uncased/2_classes/context_False/only-relevant_True/model.pth",
         dataset_path = "2013_2014_2015_bert-uncased_binary_not-contextual_only_relevant.csv",
         base_run_filename = ".txt"
     ):
+        self.nuggets_filename = "data/nuggets.tsv"
+        self.updates_filename = "data/updates.tsv"
+        self.matches_filename = "data/matches.tsv"
+
+        if not exists("models/bert-uncased/2_classes/context_False/only-relevant_True"):
+            os.makedirs("models/bert-uncased/2_classes/context_False/only-relevant_True")
+
+        if not exists("data"):
+            os.makedir("data")
+
+        if not exists(self.nuggets_filename):
+            download_file(self.nuggets_filename)
+
+        if not exists(self.updates_filename):
+            download_file(self.updates_filename)
+
+        if not exists(self.matches_filename):
+            download_file(self.matches_filename)
 
         if not exists(dataset_path):
           download_file(dataset_path)
@@ -112,15 +132,11 @@ class TrecEvaluator:
         runs_filename: list
     ):
 
-      nuggets_filename = "./data/raw_concat/nuggets.tsv"
-      updates_filename = "./data/raw_concat/updates.tsv"
-      matches_filename = "./data/raw_concat/matches.tsv"
-
       evaluation_script(
-          nuggets_filename,
-          updates_filename,
+          self.nuggets_filename,
+          self.updates_filename,
           runs_filename,
-          matches_filename,
+          self.matches_filename,
           None,
           args_debug     = False,
           args_binaryrel = True
