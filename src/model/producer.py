@@ -85,12 +85,13 @@ class Producer:
         return self.__select_most_representative_paraphrased_sentence(paraphrased_texts, input_text)
 
     
-    def __emit(self, paraphrased_candidate):
-        print(f"{len(self.summary_sentences)}\t{paraphrased_candidate}")
+    def __emit(self, paraphrased_candidate, verbose):
+        if verbose:
+            print(f"{len(self.summary_sentences)}\t{paraphrased_candidate}")
         self.summary_sentences.append(paraphrased_candidate)
         return
 
-    def update_summary(self, candidate: list):
+    def update_summary(self, candidate: list, verbose = True):
 
         self.__update_threshold()
 
@@ -101,20 +102,20 @@ class Producer:
 
         if self.counter == 1:
 
-            self.__emit(paraphrased_candidate)
+            self.__emit(paraphrased_candidate, verbose)
             self.counter += 1
-            return
+            return True
 
         cosine_similarity = self.__get_overall_cosine_similarity(candidate_str)
 
         if cosine_similarity >= self.lower_bound_threshold and cosine_similarity < self.upper_bound_threshold:
 
-            self.__emit(paraphrased_candidate)
+            self.__emit(paraphrased_candidate, verbose)
             self.counter += 1
-            return
+            return True
 
         self.counter += 1
-        return
+        return False
 
 def clean_sentence(candidate: str):
 

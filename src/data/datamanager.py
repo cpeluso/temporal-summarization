@@ -17,6 +17,27 @@ import math
 from src.data.s3_connector import download_file
 from src.data.connector    import get_dataset_path
 
+class EvaluationDataset(torch.utils.data.Dataset):
+
+  def __init__(self, encodings, doc_ids, sent_ids, labels):
+      self.encodings = encodings
+      self.labels    = labels
+      self.doc_ids   = doc_ids
+      self.sent_ids  = sent_ids
+
+  def __getitem__(self, idx):
+      item = {k: torch.tensor(list(map(int, v[idx].strip('][').split(', ')))) for k, v in self.encodings.items()}
+      item["labels"] = torch.tensor(
+          [list(map(int, self.labels[idx].strip('][').split(', ')))], 
+          dtype = torch.float
+      )
+      item["int_doc_id"] = self.doc_ids[idx]
+      item["sent_id"]    = self.sent_ids[idx]
+      return item
+
+  def __len__(self):
+      return len(self.labels)
+
 class TrecDataset(torch.utils.data.Dataset):
   """
   TrecDataset class. Extends the torch.utils.data.Dataset class.

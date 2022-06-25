@@ -47,7 +47,7 @@ def load_data(
   max_num_words:  int,
   binary_masks:   bool,
   contextual:     bool,
-  test:           bool
+  test:           bool = False
 ) -> pd.DataFrame:
 
   data_loader = DataLoader(datasets, only_relevant, tokenizer_name, tokenizer_type, max_num_words, binary_masks, contextual)

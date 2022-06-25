@@ -4,7 +4,7 @@ import sys
 import math
 from sklearn.metrics import accuracy_score
 
-from src.model.evaluator import *
+from model.qualitative_evaluator import *
 from utils.tokenizers import tokenizers
 from src.data.s3_connector import download_file, upload_file
 from src.model.producer import Producer
@@ -69,7 +69,7 @@ class BertTrainer:
       self.best_validation_loss     = 1_000_000
       self.best_validation_accuracy = 0
 
-      self.evaluator = Evaluator(self.tokenizer, max_num_words, self.model.num_labels)
+      self.evaluator = QualitativeEvaluator(self.tokenizer, max_num_words, self.model.num_labels)
       pass
 
     def __unpack_batch(self, batch):
@@ -85,7 +85,7 @@ class BertTrainer:
       tr_logits = outputs.logits
       return loss, tr_logits
 
-    def __compute_accuracy(self, labels, tr_logits, tr_accuracy):
+    def __compute_accuracy(self, labels, tr_logits, tr_accuracy, is_train = True):
       # compute training accuracy
       flattened_targets = labels.view(-1) # shape (batch_size * seq_len,)
       active_logits = tr_logits.view(-1, self.model.num_labels) # shape (batch_size * seq_len, num_labels)
@@ -108,8 +108,12 @@ class BertTrainer:
 
       tr_accuracy += tmp_tr_accuracy
 
-      flattened_targets     = torch.tensor_split(flattened_targets,     self.train_batch_size)
-      flattened_predictions = torch.tensor_split(flattened_predictions, self.train_batch_size)
+      if is_train:
+        flattened_targets     = torch.tensor_split(flattened_targets,     self.train_batch_size)
+        flattened_predictions = torch.tensor_split(flattened_predictions, self.train_batch_size)
+      else:
+        flattened_targets     = torch.tensor_split(flattened_targets,     1)
+        flattened_predictions = torch.tensor_split(flattened_predictions, 1)
 
       return tr_accuracy, flattened_predictions
 
@@ -198,7 +202,7 @@ class BertTrainer:
                 nb_tr_steps += 1
                 nb_tr_examples += labels.size(0)
 
-                tr_accuracy, flattened_predictions = self.__compute_accuracy(labels, tr_logits, tr_accuracy)
+                tr_accuracy, flattened_predictions = self.__compute_accuracy(labels, tr_logits, tr_accuracy, False)
 
                 if idx % self.n_logging_steps == 0 and verbose:
                     loss_step = tr_loss/nb_tr_steps
@@ -256,7 +260,7 @@ class BertTrainer:
                 nb_tr_steps += 1
                 nb_tr_examples += labels.size(0)
 
-                tr_accuracy, flattened_predictions = self.__compute_accuracy(labels, tr_logits, tr_accuracy)
+                tr_accuracy, flattened_predictions = self.__compute_accuracy(labels, tr_logits, tr_accuracy, False)
             
                 if idx % self.n_logging_steps == 0:
                     loss_step = tr_loss/nb_tr_steps
@@ -302,7 +306,7 @@ class BertTrainer:
                 nb_tr_steps += 1
                 nb_tr_examples += labels.size(0)
 
-                tr_accuracy, flattened_predictions = self.__compute_accuracy(labels, tr_logits, tr_accuracy)
+                tr_accuracy, flattened_predictions = self.__compute_accuracy(labels, tr_logits, tr_accuracy, False)
             
                 _, predicted_spans = self.evaluator.evaluate_batch(batch, flattened_predictions, verbose = False)
                 producer.update_summary(predicted_spans)

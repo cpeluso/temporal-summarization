@@ -43,12 +43,29 @@ def generate_csv(
         * context:        bool, if True, the context is added during the embedding phase
         * only_relevant:  bool  if True, only the relevant updates are retrieved
     """
-    data = load_data(dataset, only_relevant, tokenizer_name, tokenizer_type, MAX_NUM_WORDS, binary, context, test = True)
+    data = load_data(dataset, only_relevant, tokenizer_name, tokenizer_type, MAX_NUM_WORDS, binary, context, test = False)
     data.to_csv(dataset_path, index = False)
     return
 
+def generate(dataset, tokenizer, tokenizer_type, binary_classes, contextual, only_relevant):
+   
+    path = get_dataset_path(dataset, tokenizer, tokenizer_type, binary_classes, contextual, only_relevant)
 
-def generate():
+    print("- - - - - - - - - - - - - - - - - - - - - - - -")
+    print()
+    print(f"Dataset path:   {path}")
+    print()
+    print("- - - - - - - - - - - - - - - - - - - - - - - -")
+    generate_csv(path, dataset, tokenizer, tokenizer_type, binary_classes, contextual, only_relevant)
+    print()
+    print("Done!")
+    print()
+    print("* * * * * * * * * * * * * * * * * * * * * * * *")
+    print()
+    return
+
+
+def run():
   dataset = ["2013", "2014", "2015"]
 
   tokenizers_params = {
@@ -88,34 +105,22 @@ def generate():
       for binary_classes in binary:
           for contextual in context:
               for only_relevant in only_relevant_data:
-
-                  path = get_dataset_path(dataset, tokenizer, tokenizer_type, binary_classes, contextual, only_relevant)
-
-                  print("* * * * * * * * * * * * * * * * * * * * * * * *")
-                  print()
-                  print(f"({idx}/{n_datasets})")
-                  print()
-                  print("Generating .csv dataset for params:")
-                  print(f"Dataset:        {dataset}")
-                  print(f"Encoder:        {tokenizer}-{tokenizer_type}")
-                  print(f"Binary classes: {binary_classes}")
-                  print(f"Context:        {contextual}")
-                  print(f"Only relevant:  {only_relevant}")
-                  print()
-                  print("- - - - - - - - - - - - - - - - - - - - - - - -")
-                  print()
-                  print(f"Dataset path:   {path}")
-                  print()
-                  print("- - - - - - - - - - - - - - - - - - - - - - - -")
-                  generate_csv(path, dataset, tokenizer, tokenizer_type, binary_classes, contextual, only_relevant)
-                  print()
-                  print("Done!")
-                  print()
-                  print("* * * * * * * * * * * * * * * * * * * * * * * *")
-                  print()
-
-                  idx += 1
+                
+                print("* * * * * * * * * * * * * * * * * * * * * * * *")
+                print()
+                print(f"({idx}/{n_datasets})")
+                print()
+                print("Generating .csv dataset for params:")
+                print(f"Dataset:        {dataset}")
+                print(f"Encoder:        {tokenizer}-{tokenizer_type}")
+                print(f"Binary classes: {binary_classes}")
+                print(f"Context:        {contextual}")
+                print(f"Only relevant:  {only_relevant}")
+                print()
+                
+                generate(dataset, tokenizer, tokenizer_type, binary_classes, contextual, only_relevant)
+                idx += 1
 
   return
 
-# generate()
+# run()
